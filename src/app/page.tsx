@@ -597,18 +597,6 @@ export default function DarkWriteApp() {
             </SheetContent>
           </Sheet>
         )}
-
-        {/* Floating AI Toggle */}
-        {writingMode === 'normal' && (activeView === 'editor') && (!isAIPanelOpen || isMobile) && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setIsAIPanelOpen(true)} 
-            className="absolute top-4 right-4 z-40 bg-black/40 backdrop-blur-md border border-white/5 rounded-lg h-9 w-9"
-          >
-            <Sparkles className="w-4 h-4 text-primary" />
-          </Button>
-        )}
       </main>
       
       <Toaster />
