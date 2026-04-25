@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
@@ -453,6 +452,7 @@ export default function DarkWriteApp() {
             activeChapterId={activeChapterId}
             activeView={activeView}
             onSelectView={setActiveView}
+            onSelectStory={setActiveStoryId}
             onSelectChapter={(sid, cid) => {
               setActiveStoryId(sid);
               setActiveChapterId(cid);

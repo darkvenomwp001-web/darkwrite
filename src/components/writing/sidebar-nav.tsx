@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from 'react'
@@ -40,6 +39,7 @@ interface SidebarNavProps {
   activeStoryId?: string;
   activeChapterId?: string;
   activeView: AppView;
+  onSelectStory: (storyId: string) => void;
   onSelectChapter: (storyId: string, chapterId: string) => void;
   onSelectView: (view: AppView) => void;
   onAddStory: () => void;
@@ -54,6 +54,7 @@ export function SidebarNav({
   activeStoryId,
   activeChapterId,
   activeView,
+  onSelectStory,
   onSelectChapter,
   onSelectView,
   onAddStory,
@@ -106,7 +107,6 @@ export function SidebarNav({
 
       <ScrollArea className="flex-1 px-4 py-2">
         <div className="space-y-6">
-          {/* Main App Navigation */}
           <div className="space-y-1">
             {mainNavItems.map((item) => (
               <button
@@ -127,7 +127,6 @@ export function SidebarNav({
 
           <div className="h-px w-full bg-white/5 mx-2" />
 
-          {/* Library Section */}
           <div>
             <div className="flex items-center gap-3 px-3 mb-4 text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] whitespace-nowrap">
               <Library className="w-3 h-3 text-primary shrink-0" />
@@ -153,7 +152,7 @@ export function SidebarNav({
                         if (activeStoryId !== story.id && story.chapters?.[0]) {
                           onSelectChapter(story.id, story.chapters[0].id);
                         } else {
-                          setActiveStoryId(story.id);
+                          onSelectStory(story.id);
                         }
                       }}
                     >
@@ -183,7 +182,6 @@ export function SidebarNav({
 
                   {activeStoryId === story.id && (
                     <div className="ml-5 flex flex-col space-y-1 animate-in slide-in-from-top-1">
-                      {/* Grid for project nav items on small space */}
                       <div className="grid grid-cols-3 gap-1 mb-2 px-1">
                         {projectNavItems.map((pItem) => (
                            <button
