@@ -208,7 +208,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex h-screen w-screen bg-[#09090b] overflow-hidden selection:bg-primary/30">
       {!isMobile && isAuthorized && (
-        <div className={cn("transition-all duration-500 ease-in-out shrink-0", isSidebarOpen ? "w-[22rem]" : "w-0 overflow-hidden")}>
+        <div className={cn("transition-all duration-500 ease-in-out shrink-0 relative z-50", isSidebarOpen ? "w-[22rem]" : "w-0 overflow-hidden")}>
           <SidebarNav 
             stories={stories}
             storiesLoading={storiesLoading}

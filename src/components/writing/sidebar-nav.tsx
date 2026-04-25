@@ -109,7 +109,7 @@ export function SidebarNav({
   };
 
   return (
-    <div className="w-full flex flex-col h-full font-ui overflow-hidden bg-[#09090b] border-r border-white/5 shadow-2xl">
+    <div className="w-full flex flex-col h-full font-ui overflow-hidden bg-[#09090b] border-r border-white/5 shadow-2xl relative z-30">
       <div className="p-8 pb-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
@@ -303,11 +303,14 @@ export function SidebarNav({
         </div>
       </ScrollArea>
 
-      <div className="p-6 mt-auto shrink-0">
+      <div className="p-6 mt-auto shrink-0 relative z-40">
         <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 w-full text-left group overflow-hidden focus:outline-none focus:ring-1 focus:ring-primary/20 rounded-xl transition-all">
+              <button 
+                type="button"
+                className="flex items-center gap-3 w-full text-left group overflow-hidden focus:outline-none focus:ring-1 focus:ring-primary/20 rounded-xl transition-all pointer-events-auto"
+              >
                 <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0 overflow-hidden shadow-inner">
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
@@ -322,7 +325,7 @@ export function SidebarNav({
                 <Settings2 className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl mb-2">
+            <DropdownMenuContent align="end" side="top" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl mb-2 z-50">
               <div className="px-3 py-2 mb-2">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
                 <p className="text-xs font-medium truncate mt-1 text-white">{user?.email || 'Anonymous Session'}</p>
@@ -340,7 +343,7 @@ export function SidebarNav({
       </div>
 
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="bg-[#09090b] border-white/5 text-white rounded-2xl max-w-sm">
+        <DialogContent className="bg-[#09090b] border-white/5 text-white rounded-2xl max-w-sm z-[60]">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Rename Manuscript Folder</DialogTitle>
           </DialogHeader>
