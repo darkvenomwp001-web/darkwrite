@@ -54,6 +54,7 @@ export function AppShell({ children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [checkFinished, setCheckFinished] = useState(false);
 
   useEffect(() => {
     if (isMobile) {
@@ -69,8 +70,13 @@ export function AppShell({ children }: AppShellProps) {
     
     if (saved === 'true') {
       setIsAuthorized(true);
-    } else if (!publicRoutes.includes(pathname)) {
-      router.push('/darkwritelogin');
+      setCheckFinished(true);
+    } else {
+      setIsAuthorized(false);
+      setCheckFinished(true);
+      if (!publicRoutes.includes(pathname)) {
+        router.push('/darkwritelogin');
+      }
     }
   }, [pathname, router]);
 
@@ -187,7 +193,7 @@ export function AppShell({ children }: AppShellProps) {
     router.push('/');
   };
 
-  if (authLoading || (isAuthorized && !user && isAuthenticating)) {
+  if (!checkFinished || authLoading || (isAuthorized && !user && isAuthenticating)) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#09090b] gap-6">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
