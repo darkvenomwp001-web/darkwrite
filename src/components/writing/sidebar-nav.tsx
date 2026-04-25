@@ -131,11 +131,10 @@ export function SidebarNav({
       <div className="px-6 pb-6 shrink-0">
         <Button 
           onClick={onAddStory}
-          variant="outline" 
-          className="w-full h-11 justify-start gap-3 border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all text-muted-foreground hover:text-foreground rounded-xl group"
+          className="w-full h-12 justify-center gap-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl group shadow-lg shadow-primary/20"
         >
-          <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300 shrink-0" />
-          <span className="text-xs font-semibold truncate">New Writing Project</span>
+          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+          <span className="text-sm">New Writing Project</span>
         </Button>
       </div>
 
@@ -199,29 +198,41 @@ export function SidebarNav({
                         {activeStoryId === story.id ? <ChevronDown className="w-3 h-3 text-muted-foreground/40" /> : <ChevronRight className="w-3 h-3 opacity-0 group-hover/item:opacity-100 transition-opacity text-muted-foreground/40" />}
                       </div>
                       
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover/item:opacity-100 hover:bg-white/5 shrink-0 transition-opacity">
-                            <Settings2 className="w-3.5 h-3.5 text-muted-foreground/60" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52 bg-[#09090b] border-white/5 shadow-2xl p-1.5 rounded-xl">
-                          <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3 cursor-pointer py-2.5 rounded-lg text-white">
-                            <Plus className="w-4 h-4 text-primary" /> New Chapter
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setStoryToRename({id: story.id, title: story.title});
-                            setNewStoryTitle(story.title);
-                            setRenameDialogOpen(true);
-                          }} className="gap-3 cursor-pointer py-2.5 rounded-lg text-white">
-                            <Pencil className="w-4 h-4 text-primary" /> Rename Folder
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-white/5" />
-                          <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3 cursor-pointer py-2.5 rounded-lg hover:bg-red-500/10">
-                            <Trash2 className="w-4 h-4" /> Delete Manuscript
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={(e) => { e.stopPropagation(); onAddChapter(story.id); }}
+                          className="h-7 w-7 hover:bg-primary/20 hover:text-primary rounded-lg text-muted-foreground"
+                          title="Add Chapter"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/5 rounded-lg shrink-0">
+                              <Settings2 className="w-3.5 h-3.5 text-muted-foreground/60" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52 bg-[#09090b] border-white/5 shadow-2xl p-1.5 rounded-xl">
+                            <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3 cursor-pointer py-2.5 rounded-lg text-white">
+                              <Plus className="w-4 h-4 text-primary" /> New Chapter
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setStoryToRename({id: story.id, title: story.title});
+                              setNewStoryTitle(story.title);
+                              setRenameDialogOpen(true);
+                            }} className="gap-3 cursor-pointer py-2.5 rounded-lg text-white">
+                              <Pencil className="w-4 h-4 text-primary" /> Rename Folder
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-white/5" />
+                            <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3 cursor-pointer py-2.5 rounded-lg hover:bg-red-500/10">
+                              <Trash2 className="w-4 h-4" /> Delete Manuscript
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
 
                     {/* Nested Chapters & Tools */}
@@ -255,7 +266,8 @@ export function SidebarNav({
                             <span className="text-[7px] font-bold text-muted-foreground/60 uppercase tracking-widest">Chapters</span>
                             <button 
                               onClick={() => onAddChapter(story.id)}
-                              className="text-primary hover:text-primary/80 transition-colors"
+                              className="text-primary hover:text-primary/80 transition-colors p-1"
+                              title="New Chapter"
                             >
                               <Plus className="w-3 h-3" />
                             </button>

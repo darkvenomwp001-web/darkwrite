@@ -12,7 +12,9 @@ import {
   Minimize2, 
   Type, 
   Sparkles,
-  Edit3
+  Edit3,
+  Plus,
+  BookOpen
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -44,17 +46,20 @@ export function WritingEditor({
         <div className="absolute inset-0 bg-radial-at-c from-primary/5 to-transparent pointer-events-none" />
         <div className="space-y-8 max-w-md relative z-10 animate-fade-in">
           <div className="w-24 h-24 rounded-3xl bg-primary/5 flex items-center justify-center mx-auto border border-primary/10 shadow-2xl shadow-primary/5">
-            <Edit3 className="w-10 h-10 text-primary/40" />
+            <BookOpen className="w-10 h-10 text-primary/40" />
           </div>
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight text-white/80">Begin Your Story</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-white/80">Select a Chapter to Write</h2>
             <p className="text-base text-muted-foreground/60 leading-relaxed max-w-xs mx-auto italic">
-              "The first sentence is the hardest. After that, the words find their own way."
+              "Every story starts with a single word. Pick your chapter from the library on the left and let it flow."
             </p>
           </div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary/60">
-            Select a chapter in the library to start scribing
-          </p>
+          <div className="flex flex-col items-center gap-4">
+             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
+               <Plus className="w-4 h-4 text-primary" />
+               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Use the Sidebar to add chapters</span>
+             </div>
+          </div>
         </div>
       </div>
     )
