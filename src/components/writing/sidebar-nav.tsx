@@ -1,8 +1,7 @@
-
 "use client"
 
 import React from 'react'
-import { FolderOpen, Plus, FileText, Settings, Trash2, Edit3, Library, LogOut, User } from 'lucide-react'
+import { FolderOpen, Plus, FileText, Settings, Trash2, Edit3, Library, LogOut, User, ChevronRight } from 'lucide-react'
 import { Story, Chapter } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -41,82 +40,97 @@ export function SidebarNav({
   onLogout
 }: SidebarNavProps) {
   return (
-    <div className="w-64 border-r bg-card flex flex-col h-full font-ui overflow-hidden shadow-xl">
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Edit3 className="w-5 h-5 text-white" />
+    <div className="w-72 border-r border-white/5 bg-[#09090b] flex flex-col h-full font-ui overflow-hidden shadow-2xl relative z-30">
+      <div className="p-8 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <Edit3 className="w-6 h-6 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight">DarkWrite</span>
+          <div className="flex flex-col">
+            <span className="font-bold text-xl tracking-tighter leading-none">DarkWrite</span>
+            <span className="text-[10px] font-bold tracking-widest text-primary uppercase mt-1">Sanctuary</span>
+          </div>
         </div>
       </div>
 
-      <div className="px-4 py-2">
+      <div className="px-6 py-4">
         <Button 
           onClick={onAddStory}
           variant="outline" 
-          className="w-full justify-start gap-2 border-dashed border-muted hover:border-primary/50 transition-all text-muted-foreground hover:text-foreground"
+          className="w-full h-12 justify-start gap-3 border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all text-muted-foreground hover:text-foreground rounded-xl group"
         >
-          <Plus className="w-4 h-4" />
-          New Story
+          <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+          <span className="text-sm font-medium">New Writing Project</span>
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-2 py-4">
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 px-4 py-4">
+        <div className="space-y-8">
           <div>
-            <div className="flex items-center gap-2 px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <Library className="w-3 h-3" />
+            <div className="flex items-center gap-3 px-3 mb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+              <Library className="w-3 h-3 text-primary" />
               Your Library
             </div>
             
             <div className="space-y-1">
               {stories.length === 0 && (
-                <div className="px-3 py-4 text-center">
-                  <p className="text-xs text-muted-foreground italic">No stories yet. Start writing your legacy.</p>
+                <div className="px-4 py-12 text-center rounded-2xl border border-dashed border-white/5">
+                  <p className="text-xs text-muted-foreground italic leading-relaxed">Your library is silent. Start a new story to begin your legacy.</p>
                 </div>
               )}
               {stories.map((story) => (
-                <div key={story.id} className="group flex flex-col">
-                  <div className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-2 overflow-hidden">
+                <div key={story.id} className="group flex flex-col space-y-1">
+                  <div className={cn(
+                    "flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer group",
+                    activeStoryId === story.id ? "bg-white/[0.05] shadow-sm" : "hover:bg-white/[0.02]"
+                  )}>
+                    <div 
+                      className="flex items-center gap-3 overflow-hidden flex-1"
+                      onClick={() => activeStoryId !== story.id && onAddChapter(story.id)}
+                    >
                       <FolderOpen className={cn("w-4 h-4 shrink-0 transition-colors", activeStoryId === story.id ? "text-primary" : "text-muted-foreground")} />
-                      <span className="text-sm font-medium truncate">{story.title}</span>
+                      <span className={cn("text-sm font-semibold truncate transition-colors", activeStoryId === story.id ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>
+                        {story.title}
+                      </span>
                     </div>
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Settings className="w-3 h-3" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/5">
+                          <Settings className="w-4 h-4 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-2">
-                          <Plus className="w-3 h-3" /> New Chapter
+                      <DropdownMenuContent align="end" className="w-48 bg-[#09090b] border-white/5">
+                        <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3 py-2">
+                          <Plus className="w-4 h-4" /> New Chapter
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-destructive gap-2">
-                          <Trash2 className="w-3 h-3" /> Delete Story
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3 py-2 hover:bg-red-500/10">
+                          <Trash2 className="w-4 h-4" /> Delete Project
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
 
                   {activeStoryId === story.id && (
-                    <div className="ml-6 mt-1 space-y-1">
+                    <div className="ml-6 flex flex-col space-y-1 animate-in slide-in-from-top-2 duration-300">
                       {story.chapters?.map((chapter) => (
                         <button
                           key={chapter.id}
                           onClick={() => onSelectChapter(story.id, chapter.id)}
                           className={cn(
-                            "w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all text-left",
+                            "group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all text-left relative",
                             activeChapterId === chapter.id 
-                              ? "bg-primary/20 text-primary font-medium" 
-                              : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                              ? "text-primary bg-primary/5 font-bold" 
+                              : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
                           )}
                         >
-                          <FileText className="w-3.5 h-3.5 shrink-0" />
+                          {activeChapterId === chapter.id && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-primary rounded-full" />
+                          )}
+                          <FileText className={cn("w-4 h-4 shrink-0 transition-colors", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/40")} />
                           <span className="truncate">{chapter.title}</span>
+                          <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity", activeChapterId === chapter.id && "opacity-100")} />
                         </button>
                       ))}
                     </div>
@@ -128,32 +142,37 @@ export function SidebarNav({
         </div>
       </ScrollArea>
 
-      <Separator />
-      
-      <div className="p-4 bg-muted/20">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 w-full text-left hover:bg-muted/30 p-2 rounded-lg transition-colors group">
-              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold text-xs overflow-hidden">
-                {user?.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
-                ) : (
-                  user?.displayName?.charAt(0) || <User className="w-4 h-4" />
-                )}
+      <div className="p-6 mt-auto">
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-4 w-full text-left group">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shadow-inner">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                  ) : (
+                    user?.displayName?.charAt(0) || <User className="w-5 h-5" />
+                  )}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-bold truncate tracking-tight">{user?.displayName || 'Scribe'}</p>
+                  <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-widest mt-0.5">Author Account</p>
+                </div>
+                <Settings className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 bg-[#09090b] border-white/5 p-2">
+              <div className="px-3 py-2 mb-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
+                <p className="text-sm font-medium truncate mt-1">{user?.email || 'Anonymous Session'}</p>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium truncate">{user?.displayName || 'Writer'}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-              </div>
-              <Settings className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={onLogout} className="text-destructive gap-2">
-              <LogOut className="w-4 h-4" /> Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuItem onClick={onLogout} className="text-red-500 gap-3 py-3 rounded-lg hover:bg-red-500/10">
+                <LogOut className="w-4 h-4" /> Terminate Session
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   )

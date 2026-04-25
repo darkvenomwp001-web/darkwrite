@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 255 15% 15%;
-    --foreground: 255 10% 95%;
-    --card: 255 15% 18%;
-    --card-foreground: 255 10% 95%;
-    --popover: 255 15% 12%;
-    --popover-foreground: 255 10% 95%;
-    --primary: 260 43% 42%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 255 12% 22%;
-    --secondary-foreground: 255 10% 90%;
-    --muted: 255 10% 25%;
-    --muted-foreground: 255 10% 70%;
-    --accent: 211 91% 68%;
-    --accent-foreground: 255 15% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 255 12% 25%;
-    --input: 255 12% 25%;
-    --ring: 260 43% 42%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
     --radius: 0.75rem;
   }
 }
@@ -67,4 +67,12 @@
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+.glow-on-hover:hover {
+  box-shadow: 0 0 20px hsla(var(--primary), 0.3);
+}
+
+.focus-transition {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }

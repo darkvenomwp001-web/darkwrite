@@ -1,8 +1,7 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Story, Chapter } from '@/lib/types'
+import { Story, Chapter, WritingMode } from '@/lib/types'
 import { SidebarNav } from '@/components/writing/sidebar-nav'
 import { WritingEditor } from '@/components/writing/writing-editor'
 import { AIPanel } from '@/components/writing/ai-panel'
@@ -29,9 +28,10 @@ import {
 import { signInAnonymously, signOut } from 'firebase/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { KeyRound, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
+import { KeyRound, Lock, ArrowRight, Loader2, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
+import { cn } from '@/lib/utils'
 
 const ACCESS_PASSWORD = 'darkwrite2025';
 
@@ -44,6 +44,7 @@ export default function DarkWriteApp() {
   const [activeStoryId, setActiveStoryId] = useState<string | undefined>();
   const [activeChapterId, setActiveChapterId] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
+  const [writingMode, setWritingMode] = useState<WritingMode>('normal');
   
   // Authorization state
   const [password, setPassword] = useState('');
@@ -114,17 +115,17 @@ export default function DarkWriteApp() {
     if (e) e.preventDefault();
     
     if (password === ACCESS_PASSWORD) {
-      toast({
-        title: "Access Granted",
-        description: "Welcome back, scribe. Unlocking the sanctuary...",
-      });
       setIsAuthorized(true);
       localStorage.setItem('dw_authorized', 'true');
+      toast({
+        title: "Sanctuary Unlocked",
+        description: "Welcome back, scribe.",
+      });
     } else {
       toast({
         variant: "destructive",
-        title: "Invalid Access Key",
-        description: "The path remains closed. Please verify the unique key.",
+        title: "Access Denied",
+        description: "The path remains closed. Check your unique key.",
       });
     }
   };
@@ -205,59 +206,72 @@ export default function DarkWriteApp() {
     setPassword('');
   };
 
-  // Loading Screen: Show when we are verifying password or signing in
+  // Loading Screen
   if (authLoading || (isAuthorized && !user && isAuthenticating)) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-muted-foreground animate-pulse font-medium tracking-wide">Opening the Sanctuary...</p>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#09090b] gap-6">
+        <div className="relative">
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <Sparkles className="w-6 h-6 text-primary absolute -top-2 -right-2 animate-pulse" />
+        </div>
+        <div className="text-center space-y-2">
+          <p className="text-xl font-medium tracking-widest text-foreground animate-pulse">Opening the Sanctuary</p>
+          <p className="text-sm text-muted-foreground italic">"Patience is the scribe's greatest virtue."</p>
+        </div>
       </div>
     );
   }
 
-  // Password Gate: Show only if not authorized or not signed in
-  if (!user || !isAuthorized) {
+  // Password Gate
+  if (!isAuthorized) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4 font-ui">
-        <div className="max-w-md w-full space-y-8 text-center animate-in fade-in duration-700">
-          <div className="w-20 h-20 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/20">
-            <Lock className="w-10 h-10 text-white" />
-          </div>
-          
-          <div className="space-y-3">
-            <h1 className="text-4xl font-bold tracking-tight">DarkWrite</h1>
-            <p className="text-muted-foreground">A private sanctuary for the dedicated scribe.</p>
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b] font-ui relative overflow-hidden">
+        {/* Background Atmosphere */}
+        <div className="absolute inset-0 bg-radial-at-t from-primary/10 via-transparent to-transparent opacity-50" />
+        
+        <div className="max-w-md w-full p-8 space-y-12 relative z-10">
+          <div className="text-center space-y-6">
+            <div className="w-24 h-24 rounded-3xl bg-primary mx-auto flex items-center justify-center shadow-[0_0_50px_rgba(124,58,237,0.3)] animate-in zoom-in duration-1000">
+              <Lock className="w-12 h-12 text-white" />
+            </div>
+            <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+              <h1 className="text-5xl font-bold tracking-tighter">DarkWrite</h1>
+              <p className="text-muted-foreground text-lg">A private sanctuary for the dedicated scribe.</p>
+            </div>
           </div>
 
-          <form onSubmit={handleUnlock} className="space-y-4 pt-4">
-            <div className="relative group">
-              <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Access Key"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 pr-12 h-12 bg-card border-border/50 focus:border-primary transition-all rounded-xl"
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          <form onSubmit={handleUnlock} className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+            <div className="space-y-4">
+              <div className="relative group">
+                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter Sanctuary Key"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-14 pr-14 h-16 bg-card/50 border-border/50 focus:border-primary/50 text-xl transition-all rounded-2xl backdrop-blur-sm"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+                </button>
+              </div>
+              <Button 
+                size="lg" 
+                type="submit"
+                disabled={isAuthenticating}
+                className="w-full h-16 gap-3 text-xl font-bold shadow-2xl shadow-primary/20 rounded-2xl transition-all active:scale-[0.98] glow-on-hover"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+                {isAuthenticating ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Unlock Sanctuary <ArrowRight className="w-6 h-6" /></>}
+              </Button>
             </div>
-            <Button 
-              size="lg" 
-              type="submit"
-              disabled={isAuthenticating}
-              className="w-full h-12 gap-2 text-lg font-semibold shadow-lg shadow-primary/20 rounded-xl transition-all active:scale-95"
-            >
-              {isAuthenticating ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Unlock Sanctuary <ArrowRight className="w-5 h-5" /></>}
-            </Button>
-            <p className="text-sm text-muted-foreground/60 italic pt-6">
-              "Words are sacred. Only the worthy may scribe."
+            
+            <p className="text-sm text-muted-foreground/40 text-center italic leading-relaxed px-8">
+              "Words are sacred. Only those who hold the key may enter the silence and begin their legacy."
             </p>
           </form>
         </div>
@@ -267,21 +281,23 @@ export default function DarkWriteApp() {
 
   // Main Writing Dashboard
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/40 selection:text-white font-ui">
-      <SidebarNav 
-        stories={stories}
-        activeStoryId={activeStoryId}
-        activeChapterId={activeChapterId}
-        onSelectChapter={(sid, cid) => {
-          setActiveStoryId(sid);
-          setActiveChapterId(cid);
-        }}
-        onAddStory={handleAddStory}
-        onAddChapter={handleAddChapter}
-        onDeleteStory={handleDeleteStory}
-        user={user}
-        onLogout={handleLogout}
-      />
+    <div className="flex h-screen w-full bg-[#09090b] overflow-hidden selection:bg-primary/40 selection:text-white font-ui">
+      {writingMode === 'normal' && (
+        <SidebarNav 
+          stories={stories}
+          activeStoryId={activeStoryId}
+          activeChapterId={activeChapterId}
+          onSelectChapter={(sid, cid) => {
+            setActiveStoryId(sid);
+            setActiveChapterId(cid);
+          }}
+          onAddStory={handleAddStory}
+          onAddChapter={handleAddChapter}
+          onDeleteStory={handleDeleteStory}
+          user={user}
+          onLogout={handleLogout}
+        />
+      )}
       
       <main className="flex-1 flex flex-row overflow-hidden relative">
         <WritingEditor 
@@ -289,11 +305,15 @@ export default function DarkWriteApp() {
           onUpdateContent={handleUpdateContent}
           onUpdateTitle={handleUpdateTitle}
           saving={saving}
+          writingMode={writingMode}
+          onToggleWritingMode={() => setWritingMode(prev => prev === 'normal' ? 'focus' : 'normal')}
         />
         
-        <AIPanel 
-          currentText={activeChapter?.content || ''} 
-        />
+        {writingMode === 'normal' && (
+          <AIPanel 
+            currentText={activeChapter?.content || ''} 
+          />
+        )}
       </main>
       
       <Toaster />
