@@ -45,7 +45,15 @@ import {
   Menu,
   Sparkles,
   PanelLeft,
-  PanelRight
+  PanelRight,
+  Users,
+  Globe,
+  GitGraph,
+  Search,
+  Download,
+  Archive,
+  Settings,
+  BarChart3
 } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
@@ -118,7 +126,7 @@ export default function DarkWriteApp() {
     );
   }, [firestore, user]);
 
-  const { data: storiesData } = useCollection<Story>(storiesQuery);
+  const { data: storiesData, loading: storiesLoading } = useCollection<Story>(storiesQuery);
 
   const chaptersQuery = useMemoFirebase(() => {
     if (!firestore || !activeStoryId) return null;
@@ -181,27 +189,29 @@ export default function DarkWriteApp() {
       });
   };
 
-  const handleAddStory = () => {
+  const handleAddStory = async () => {
     if (!firestore || !user) return;
     const storiesRef = collection(firestore, 'stories');
-    addDoc(storiesRef, {
-      title: 'New Manuscript',
-      userId: user.uid,
-      createdAt: serverTimestamp(),
-      status: 'active'
-    }).then((storyDoc) => {
+    try {
+      const storyDoc = await addDoc(storiesRef, {
+        title: 'New Manuscript',
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        status: 'active'
+      });
       const chaptersRef = collection(firestore, 'stories', storyDoc.id, 'chapters');
-      addDoc(chaptersRef, {
+      const chapDoc = await addDoc(chaptersRef, {
         title: 'Chapter 1',
         content: '',
         order: 1,
         lastSaved: serverTimestamp()
-      }).then((chapDoc) => {
-        setActiveStoryId(storyDoc.id);
-        setActiveChapterId(chapDoc.id);
-        setActiveView('editor');
       });
-    });
+      setActiveStoryId(storyDoc.id);
+      setActiveChapterId(chapDoc.id);
+      setActiveView('editor');
+    } catch (err) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to create new manuscript." });
+    }
   };
 
   const handleAddChapter = (storyId: string) => {
@@ -222,6 +232,11 @@ export default function DarkWriteApp() {
   const handleDeleteStory = (storyId: string) => {
     if (!firestore) return;
     deleteDoc(doc(firestore, 'stories', storyId));
+    if (activeStoryId === storyId) {
+      setActiveStoryId(undefined);
+      setActiveChapterId(undefined);
+      setActiveView('dashboard');
+    }
   };
 
   const handleLogout = () => {
@@ -301,6 +316,145 @@ export default function DarkWriteApp() {
             onToggleWritingMode={() => setWritingMode(prev => prev === 'normal' ? 'focus' : 'normal')}
           />
         );
+      case 'characters':
+        return (
+          <div className="flex-1 p-8 md:p-12 overflow-y-auto">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <header className="flex items-center justify-between pt-8 md:pt-0">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                    <Users className="w-8 h-8 text-primary" /> Character Codex
+                  </h1>
+                  <p className="text-muted-foreground italic">Track the souls who inhabit your world.</p>
+                </div>
+                <Button className="rounded-xl"><Plus className="w-4 h-4 mr-2" /> New Character</Button>
+              </header>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="bg-white/[0.02] border-white/5">
+                  <CardContent className="p-12 text-center text-muted-foreground italic">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                    No characters recorded in this arc yet.
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        );
+      case 'world':
+        return (
+          <div className="flex-1 p-8 md:p-12 overflow-y-auto">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <header className="flex items-center justify-between pt-8 md:pt-0">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                    <Globe className="w-8 h-8 text-primary" /> World Atlas
+                  </h1>
+                  <p className="text-muted-foreground italic">Chart the territories of your imagination.</p>
+                </div>
+                <Button className="rounded-xl"><Plus className="w-4 h-4 mr-2" /> New Location</Button>
+              </header>
+              <Card className="bg-white/[0.02] border-white/5">
+                <CardContent className="p-12 text-center text-muted-foreground italic">
+                  <Globe className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                  Your world is currently a blank map.
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
+      case 'plot':
+        return (
+          <div className="flex-1 p-8 md:p-12 overflow-y-auto">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <header className="flex items-center justify-between pt-8 md:pt-0">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                    <GitGraph className="w-8 h-8 text-primary" /> Plot Outline
+                  </h1>
+                  <p className="text-muted-foreground italic">Visualize the threads of your destiny.</p>
+                </div>
+                <Button className="rounded-xl"><Plus className="w-4 h-4 mr-2" /> Add Beat</Button>
+              </header>
+              <div className="relative border-l-2 border-white/5 ml-4 pl-8 space-y-8">
+                <div className="relative">
+                  <div className="absolute -left-[34px] top-0 w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50" />
+                  <h3 className="font-bold text-lg">Inciting Incident</h3>
+                  <p className="text-sm text-muted-foreground italic">Drafting...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'search':
+        return (
+          <div className="flex-1 p-8 md:p-12">
+            <div className="max-w-2xl mx-auto space-y-8">
+              <div className="relative pt-8 md:pt-0">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <Input className="h-14 pl-12 text-lg rounded-2xl bg-white/[0.02] border-white/5" placeholder="Search across all manuscripts..." />
+              </div>
+              <p className="text-center text-muted-foreground text-sm italic">Type a keyword to begin your search.</p>
+            </div>
+          </div>
+        );
+      case 'stats':
+        return (
+          <div className="flex-1 p-8 md:p-12 overflow-y-auto">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <h1 className="text-3xl font-bold pt-8 md:pt-0">Writing Analytics</h1>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="bg-white/[0.02] border-white/5 h-64">
+                   <CardHeader><CardTitle className="text-xs uppercase tracking-widest text-primary">Word Count Velocity</CardTitle></CardHeader>
+                   <CardContent className="flex items-center justify-center h-full pb-12">
+                     <BarChart3 className="w-12 h-12 opacity-10" />
+                   </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        );
+      case 'export':
+        return (
+          <div className="flex-1 p-8 md:p-12">
+             <div className="max-w-xl mx-auto space-y-8 text-center pt-8 md:pt-0">
+                <Download className="w-16 h-16 text-primary mx-auto opacity-50" />
+                <h1 className="text-3xl font-bold">Export Manuscript</h1>
+                <p className="text-muted-foreground">Format and prepare your work for the world to see.</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button variant="outline" className="h-16 rounded-2xl">PDF Document</Button>
+                  <Button variant="outline" className="h-16 rounded-2xl">ePub Format</Button>
+                </div>
+             </div>
+          </div>
+        );
+      case 'archive':
+        return (
+          <div className="flex-1 p-8 md:p-12">
+            <div className="max-w-4xl mx-auto space-y-8 pt-8 md:pt-0">
+              <h1 className="text-3xl font-bold flex items-center gap-3"><Archive className="w-8 h-8 text-muted-foreground" /> Archive</h1>
+              <Card className="bg-white/[0.01] border-white/5">
+                <CardContent className="p-12 text-center text-muted-foreground italic">Your vault is currently empty.</CardContent>
+              </Card>
+            </div>
+          </div>
+        );
+      case 'settings':
+        return (
+          <div className="flex-1 p-8 md:p-12">
+            <div className="max-w-2xl mx-auto space-y-8 pt-8 md:pt-0">
+              <h1 className="text-3xl font-bold flex items-center gap-3"><Settings className="w-8 h-8" /> Settings</h1>
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold">Distraction-Free Auto-Hide</h3>
+                    <p className="text-xs text-muted-foreground">Hide sidebar automatically during deep work sessions.</p>
+                  </div>
+                  <Button variant="outline" size="sm">Enabled</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
       default:
         return (
           <div className="flex-1 flex flex-col items-center justify-center bg-[#09090b] text-muted-foreground p-6 text-center">
@@ -368,6 +522,7 @@ export default function DarkWriteApp() {
         <div className={cn("transition-all duration-500 ease-in-out shrink-0", isSidebarOpen ? "w-72" : "w-0 overflow-hidden")}>
           <SidebarNav 
             stories={stories}
+            storiesLoading={storiesLoading}
             activeStoryId={activeStoryId}
             activeChapterId={activeChapterId}
             activeView={activeView}
@@ -399,6 +554,7 @@ export default function DarkWriteApp() {
             </div>
             <SidebarNav 
               stories={stories}
+              storiesLoading={storiesLoading}
               activeStoryId={activeStoryId}
               activeChapterId={activeChapterId}
               activeView={activeView}
@@ -410,7 +566,7 @@ export default function DarkWriteApp() {
                 setActiveView('editor');
                 setIsSidebarOpen(false);
               }}
-              onAddStory={() => { handleAddStory(); setIsSidebarOpen(false); }}
+              onAddStory={handleAddStory}
               onAddChapter={handleAddChapter}
               onDeleteStory={handleDeleteStory}
               user={user}

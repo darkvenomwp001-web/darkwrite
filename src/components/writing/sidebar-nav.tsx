@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from 'react'
@@ -25,6 +26,7 @@ import { Story, AppView } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +38,7 @@ import { User as FirebaseUser } from 'firebase/auth'
 
 interface SidebarNavProps {
   stories: Story[];
+  storiesLoading?: boolean;
   activeStoryId?: string;
   activeChapterId?: string;
   activeView: AppView;
@@ -51,6 +54,7 @@ interface SidebarNavProps {
 
 export function SidebarNav({
   stories,
+  storiesLoading,
   activeStoryId,
   activeChapterId,
   activeView,
@@ -134,95 +138,98 @@ export function SidebarNav({
             </div>
             
             <div className="space-y-1">
-              {stories.length === 0 && (
+              {storiesLoading ? (
+                <div className="space-y-2 px-4">
+                  <Skeleton className="h-10 w-full rounded-xl opacity-10" />
+                  <Skeleton className="h-10 w-full rounded-xl opacity-10" />
+                  <Skeleton className="h-10 w-full rounded-xl opacity-10" />
+                </div>
+              ) : stories.length === 0 ? (
                 <div className="px-4 py-8 text-center rounded-2xl border border-dashed border-white/5">
                   <p className="text-[10px] text-muted-foreground italic">Your library is silent.</p>
                 </div>
-              )}
-              {stories.map((story) => (
-                <div key={story.id} className="group flex flex-col space-y-1 mb-2">
-                  <div className={cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-xl transition-all cursor-pointer group/item",
-                    activeStoryId === story.id ? "bg-white/[0.05]" : "hover:bg-white/[0.02]"
-                  )}>
-                    <div 
-                      className="flex items-center gap-3 overflow-hidden flex-1"
-                      onClick={() => {
-                        onSelectView('editor');
-                        if (activeStoryId !== story.id && story.chapters?.[0]) {
-                          onSelectChapter(story.id, story.chapters[0].id);
-                        } else {
+              ) : (
+                stories.map((story) => (
+                  <div key={story.id} className="group flex flex-col space-y-1 mb-2">
+                    <div className={cn(
+                      "flex items-center justify-between px-4 py-2.5 rounded-xl transition-all cursor-pointer group/item",
+                      activeStoryId === story.id ? "bg-white/[0.05]" : "hover:bg-white/[0.02]"
+                    )}>
+                      <div 
+                        className="flex items-center gap-3 overflow-hidden flex-1"
+                        onClick={() => {
                           onSelectStory(story.id);
-                        }
-                      }}
-                    >
-                      <FolderOpen className={cn("w-4 h-4 shrink-0", activeStoryId === story.id ? "text-primary" : "text-muted-foreground/40")} />
-                      <span className={cn("text-sm font-semibold truncate", activeStoryId === story.id ? "text-foreground" : "text-muted-foreground")}>
-                        {story.title}
-                      </span>
+                          if (activeView !== 'editor') onSelectView('editor');
+                        }}
+                      >
+                        <FolderOpen className={cn("w-4 h-4 shrink-0", activeStoryId === story.id ? "text-primary" : "text-muted-foreground/40")} />
+                        <span className={cn("text-sm font-semibold truncate", activeStoryId === story.id ? "text-foreground" : "text-muted-foreground")}>
+                          {story.title}
+                        </span>
+                      </div>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover/item:opacity-100 hover:bg-white/5 shrink-0 transition-opacity">
+                            <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#09090b] border-white/5">
+                          <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3">
+                            <Plus className="w-4 h-4" /> New Chapter
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-white/5" />
+                          <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3">
+                            <Trash2 className="w-4 h-4" /> Delete Project
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover/item:opacity-100 hover:bg-white/5 shrink-0 transition-opacity">
-                          <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-[#09090b] border-white/5">
-                        <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3">
-                          <Plus className="w-4 h-4" /> New Chapter
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-white/5" />
-                        <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3">
-                          <Trash2 className="w-4 h-4" /> Delete Project
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
 
-                  {activeStoryId === story.id && (
-                    <div className="ml-5 flex flex-col space-y-1 animate-in slide-in-from-top-1">
-                      <div className="grid grid-cols-3 gap-1 mb-2 px-1">
-                        {projectNavItems.map((pItem) => (
-                           <button
-                             key={pItem.id}
-                             title={pItem.label}
-                             onClick={() => onSelectView(pItem.id as AppView)}
-                             className={cn(
-                               "flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all border shrink-0",
-                               activeView === pItem.id && activeStoryId === story.id
-                                 ? "bg-primary/20 text-primary border-primary/20"
-                                 : "bg-white/[0.01] text-muted-foreground border-transparent hover:bg-white/5"
-                             )}
-                           >
-                             <pItem.icon className="w-3.5 h-3.5" />
-                             <span className="text-[8px] font-bold uppercase tracking-tighter truncate w-full text-center">
-                               {pItem.label.split(' ')[0]}
-                             </span>
-                           </button>
+                    {activeStoryId === story.id && (
+                      <div className="ml-5 flex flex-col space-y-1 animate-in slide-in-from-top-1">
+                        <div className="grid grid-cols-3 gap-1 mb-2 px-1">
+                          {projectNavItems.map((pItem) => (
+                             <button
+                               key={pItem.id}
+                               title={pItem.label}
+                               onClick={() => onSelectView(pItem.id as AppView)}
+                               className={cn(
+                                 "flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all border shrink-0",
+                                 activeView === pItem.id && activeStoryId === story.id
+                                   ? "bg-primary/20 text-primary border-primary/20"
+                                   : "bg-white/[0.01] text-muted-foreground border-transparent hover:bg-white/5"
+                               )}
+                             >
+                               <pItem.icon className="w-3.5 h-3.5" />
+                               <span className="text-[8px] font-bold uppercase tracking-tighter truncate w-full text-center">
+                                 {pItem.label.split(' ')[0]}
+                               </span>
+                             </button>
+                          ))}
+                        </div>
+
+                        {activeView === 'editor' && story.chapters?.map((chapter) => (
+                          <button
+                            key={chapter.id}
+                            onClick={() => onSelectChapter(story.id, chapter.id)}
+                            className={cn(
+                              "group flex items-center gap-3 px-4 py-2 rounded-xl text-xs transition-all text-left",
+                              activeChapterId === chapter.id 
+                                ? "text-primary bg-primary/5 font-bold" 
+                                : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
+                            )}
+                          >
+                            <FileText className={cn("w-3.5 h-3.5 shrink-0", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/30")} />
+                            <span className="truncate">{chapter.title}</span>
+                            <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 shrink-0", activeChapterId === chapter.id && "opacity-100")} />
+                          </button>
                         ))}
                       </div>
-
-                      {activeView === 'editor' && story.chapters?.map((chapter) => (
-                        <button
-                          key={chapter.id}
-                          onClick={() => onSelectChapter(story.id, chapter.id)}
-                          className={cn(
-                            "group flex items-center gap-3 px-4 py-2 rounded-xl text-xs transition-all text-left",
-                            activeChapterId === chapter.id 
-                              ? "text-primary bg-primary/5 font-bold" 
-                              : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
-                          )}
-                        >
-                          <FileText className={cn("w-3.5 h-3.5 shrink-0", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/30")} />
-                          <span className="truncate">{chapter.title}</span>
-                          <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 shrink-0", activeChapterId === chapter.id && "opacity-100")} />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
