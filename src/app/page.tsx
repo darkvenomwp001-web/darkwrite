@@ -37,9 +37,9 @@ const ACCESS_PASSWORD = 'darkwrite2025';
 
 export default function DarkWriteApp() {
   const { toast } = useToast();
-  const { auth } = useAuth();
+  const auth = useAuth();
   const { user, loading: authLoading } = useUser();
-  const { firestore } = useFirestore();
+  const firestore = useFirestore();
 
   const [activeStoryId, setActiveStoryId] = useState<string | undefined>();
   const [activeChapterId, setActiveChapterId] = useState<string | undefined>();
