@@ -1,14 +1,14 @@
 
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { AppShell } from '@/components/writing/app-shell'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Search, FileText, Users, Globe, BookOpen } from 'lucide-react'
+import { Search, FileText, Users, Globe, BookOpen, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 
-export default function SearchPage() {
+function SearchContent() {
   const [query, setQuery] = useState('');
 
   return (
@@ -70,4 +70,16 @@ export default function SearchPage() {
       </ScrollArea>
     </AppShell>
   );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
+  )
 }

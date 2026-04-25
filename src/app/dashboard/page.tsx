@@ -1,6 +1,7 @@
+
 "use client"
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { AppShell } from '@/components/writing/app-shell'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,12 +30,13 @@ import {
   BarChart3,
   Download,
   Settings2,
-  Library
+  Library,
+  Loader2
 } from 'lucide-react'
 import { Story } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -267,4 +269,16 @@ export default function DashboardPage() {
       </ScrollArea>
     </AppShell>
   );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
+  )
 }

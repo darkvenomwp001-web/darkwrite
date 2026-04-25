@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { AppShell } from '@/components/writing/app-shell'
 import { WritingEditor } from '@/components/writing/writing-editor'
 import { AIPanel } from '@/components/writing/ai-panel'
@@ -15,8 +15,9 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
 import { Chapter, WritingMode } from '@/lib/types'
+import { Loader2 } from 'lucide-react'
 
-export default function EditorPage() {
+function EditorContent() {
   const searchParams = useSearchParams();
   const storyId = searchParams.get('storyId');
   const chapterId = searchParams.get('chapterId');
@@ -89,4 +90,16 @@ export default function EditorPage() {
       </div>
     </AppShell>
   );
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <EditorContent />
+    </Suspense>
+  )
 }

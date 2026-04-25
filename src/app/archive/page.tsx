@@ -1,13 +1,13 @@
 
 "use client"
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { AppShell } from '@/components/writing/app-shell'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Archive, Inbox, Clock } from 'lucide-react'
+import { Archive, Inbox, Clock, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 
-export default function ArchivePage() {
+function ArchiveContent() {
   return (
     <AppShell>
       <ScrollArea className="flex-1 p-8 md:p-12 bg-[#09090b]">
@@ -42,4 +42,16 @@ export default function ArchivePage() {
       </ScrollArea>
     </AppShell>
   );
+}
+
+export default function ArchivePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <ArchiveContent />
+    </Suspense>
+  )
 }

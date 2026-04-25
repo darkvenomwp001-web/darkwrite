@@ -1,16 +1,16 @@
 
 "use client"
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { AppShell } from '@/components/writing/app-shell'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Settings2, User, Shield, Zap, Palette, Bell, Cloud } from 'lucide-react'
+import { Settings2, User, Shield, Zap, Palette, Bell, Cloud, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
-export default function SettingsPage() {
+function SettingsContent() {
   return (
     <AppShell>
       <ScrollArea className="flex-1 p-8 md:p-12 bg-[#09090b]">
@@ -103,4 +103,16 @@ export default function SettingsPage() {
       </ScrollArea>
     </AppShell>
   );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
+  )
 }

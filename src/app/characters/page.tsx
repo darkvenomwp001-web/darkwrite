@@ -1,14 +1,14 @@
 
 "use client"
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import { AppShell } from '@/components/writing/app-shell'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, Plus } from 'lucide-react'
+import { Users, Plus, Loader2 } from 'lucide-react'
 
-export default function CharactersPage() {
+function CharactersContent() {
   return (
     <AppShell>
       <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
@@ -37,4 +37,16 @@ export default function CharactersPage() {
       </div>
     </AppShell>
   );
+}
+
+export default function CharactersPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen w-full flex items-center justify-center bg-[#09090b]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <CharactersContent />
+    </Suspense>
+  )
 }
