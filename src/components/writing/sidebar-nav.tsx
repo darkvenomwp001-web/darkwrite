@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState } from 'react'
@@ -306,7 +307,7 @@ export function SidebarNav({
         <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 w-full text-left group overflow-hidden">
+              <button className="flex items-center gap-3 w-full text-left group overflow-hidden focus:outline-none focus:ring-1 focus:ring-primary/20 rounded-xl transition-all">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0 overflow-hidden shadow-inner">
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
@@ -321,12 +322,15 @@ export function SidebarNav({
                 <Settings2 className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl">
+            <DropdownMenuContent align="end" side="top" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl mb-2">
               <div className="px-3 py-2 mb-2">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
                 <p className="text-xs font-medium truncate mt-1 text-white">{user?.email || 'Anonymous Session'}</p>
               </div>
               <DropdownMenuSeparator className="bg-white/5" />
+              <DropdownMenuItem onClick={() => onSelectView('settings')} className="gap-3 py-3 rounded-lg hover:bg-white/5 cursor-pointer text-white">
+                <Settings2 className="w-4 h-4 text-primary" /> Sanctuary Settings
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={onLogout} className="text-red-500 gap-3 py-3 rounded-lg hover:bg-red-500/10 cursor-pointer">
                 <LogOut className="w-4 h-4" /> Terminate Session
               </DropdownMenuItem>
