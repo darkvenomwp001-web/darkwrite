@@ -44,4 +44,9 @@ export type AppView =
   | 'search' 
   | 'export' 
   | 'archive' 
-  | 'settings';
+  | 'settings'
+  | 'notes'
+  | 'sprint'
+  | 'pacing'
+  | 'dialogue'
+  | 'versions';
