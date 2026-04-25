@@ -28,7 +28,8 @@ import {
   Loader2, 
   Menu,
   PanelLeft,
-  Wifi
+  Wifi,
+  Lock
 } from 'lucide-react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -86,7 +87,6 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [isAuthorized, user, authLoading, auth, isAuthenticating, router]);
 
-  // Simplified query to avoid composite index requirements for MVP stability
   const storiesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -111,7 +111,6 @@ export function AppShell({ children }: AppShellProps) {
 
   const stories = useMemo(() => {
     if (!storiesData) return [];
-    // Sort stories by createdAt descending locally to avoid index errors
     const sorted = [...storiesData].sort((a, b) => {
       const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
       const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
@@ -138,7 +137,10 @@ export function AppShell({ children }: AppShellProps) {
         title: 'Chapter 1',
         content: '',
         order: 1,
-        lastSaved: serverTimestamp()
+        lastSaved: serverTimestamp(),
+        status: 'draft',
+        fontFamily: 'serif',
+        fontSize: 'base'
       }).then((chapDoc) => {
         router.push(`/editor?storyId=${storyDoc.id}&chapterId=${chapDoc.id}`);
       });
@@ -155,7 +157,10 @@ export function AppShell({ children }: AppShellProps) {
       title: `Chapter ${order}`,
       content: '',
       order,
-      lastSaved: serverTimestamp()
+      lastSaved: serverTimestamp(),
+      status: 'draft',
+      fontFamily: 'serif',
+      fontSize: 'base'
     }).then((docRef) => {
       router.push(`/editor?storyId=${storyId}&chapterId=${docRef.id}`);
     });

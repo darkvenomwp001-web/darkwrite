@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { BookOpen, ArrowRight, ShieldCheck, Zap, Sparkles } from 'lucide-react'
+import { BookOpen, ArrowRight, ShieldCheck, Zap, Sparkles, Lock } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RootLandingPage() {
@@ -48,12 +48,12 @@ export default function RootLandingPage() {
             Where your <span className="text-primary italic">shadows</span> find their words.
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            A minimalist, high-fidelity writing environment designed for novelists, storytellers, and dreamers who thrive in the dark.
+            A minimalist, high-fidelity writing environment designed for novelists and storytellers who thrive in the dark.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Link href="/darkwritelogin">
-              <Button size="lg" className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-2xl shadow-primary/20 text-lg">
-                Enter the Sanctuary <ArrowRight className="w-5 h-5" />
+              <Button size="lg" className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-2xl shadow-primary/20 text-lg group">
+                Enter the Sanctuary <Lock className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </Button>
             </Link>
           </div>

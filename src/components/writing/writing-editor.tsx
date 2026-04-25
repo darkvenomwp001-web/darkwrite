@@ -20,8 +20,7 @@ import {
   Hash,
   Palette,
   AlignLeft,
-  TextSize,
-  Badge
+  ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -61,7 +60,6 @@ export function WritingEditor({
 }: WritingEditorProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
   
-  // Word count calculation
   const wordCount = activeChapter?.content?.trim() ? activeChapter.content.trim().split(/\s+/).length : 0;
 
   if (!activeChapter) {
@@ -81,7 +79,7 @@ export function WritingEditor({
           <div className="flex flex-col items-center gap-4">
              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
                <Plus className="w-4 h-4 text-primary" />
-               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Select a chapter to start scribing</span>
+               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Select a chapter in the library to start scribing</span>
              </div>
           </div>
         </div>
