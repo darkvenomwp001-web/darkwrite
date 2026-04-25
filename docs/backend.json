@@ -18,6 +18,11 @@
           "type": "string",
           "format": "date-time",
           "description": "When the story was created"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "archived", "draft"],
+          "description": "Current status of the project"
         }
       },
       "required": [
@@ -54,6 +59,30 @@
         "content",
         "lastSaved"
       ]
+    },
+    "Character": {
+      "title": "Character",
+      "description": "A character profile within a story",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "description": { "type": "string" },
+        "traits": { "type": "string" },
+        "storyId": { "type": "string" }
+      },
+      "required": ["name", "storyId"]
+    },
+    "Location": {
+      "title": "Location",
+      "description": "A setting or location within a story",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "storyId": { "type": "string" }
+      },
+      "required": ["name", "storyId"]
     }
   },
   "auth": {
@@ -69,6 +98,14 @@
     "/stories/{storyId}/chapters/{chapterId}": {
       "schema": "Chapter",
       "description": "Sub-collection of chapters for each story"
+    },
+    "/stories/{storyId}/characters/{characterId}": {
+      "schema": "Character",
+      "description": "Sub-collection of characters"
+    },
+    "/stories/{storyId}/locations/{locationId}": {
+      "schema": "Location",
+      "description": "Sub-collection of locations"
     }
   }
 }

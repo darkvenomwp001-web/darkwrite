@@ -1,12 +1,31 @@
+
 "use client"
 
 import React from 'react'
-import { FolderOpen, Plus, FileText, Settings, Trash2, Edit3, Library, LogOut, User, ChevronRight } from 'lucide-react'
-import { Story, Chapter } from '@/lib/types'
+import { 
+  Plus, 
+  FileText, 
+  Settings, 
+  Trash2, 
+  Edit3, 
+  Library, 
+  LogOut, 
+  User, 
+  ChevronRight,
+  LayoutDashboard,
+  Users,
+  Globe,
+  GitGraph,
+  BarChart3,
+  Search,
+  Download,
+  Archive,
+  FolderOpen
+} from 'lucide-react'
+import { Story, AppView } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +39,9 @@ interface SidebarNavProps {
   stories: Story[];
   activeStoryId?: string;
   activeChapterId?: string;
+  activeView: AppView;
   onSelectChapter: (storyId: string, chapterId: string) => void;
+  onSelectView: (view: AppView) => void;
   onAddStory: () => void;
   onAddChapter: (storyId: string) => void;
   onDeleteStory: (storyId: string) => void;
@@ -32,13 +53,32 @@ export function SidebarNav({
   stories,
   activeStoryId,
   activeChapterId,
+  activeView,
   onSelectChapter,
+  onSelectView,
   onAddStory,
   onAddChapter,
   onDeleteStory,
   user,
   onLogout
 }: SidebarNavProps) {
+  
+  const mainNavItems = [
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'search', icon: Search, label: 'Global Search' },
+    { id: 'stats', icon: BarChart3, label: 'Statistics' },
+    { id: 'archive', icon: Archive, label: 'Archive' },
+  ] as const;
+
+  const projectNavItems = [
+    { id: 'editor', icon: Edit3, label: 'Manuscript' },
+    { id: 'characters', icon: Users, label: 'Characters' },
+    { id: 'world', icon: Globe, label: 'World Atlas' },
+    { id: 'plot', icon: GitGraph, label: 'Plot Outline' },
+    { id: 'export', icon: Download, label: 'Export' },
+    { id: 'settings', icon: Settings, label: 'Project Settings' },
+  ] as const;
+
   return (
     <div className="w-72 border-r border-white/5 bg-[#09090b] flex flex-col h-full font-ui overflow-hidden shadow-2xl relative z-30">
       <div className="p-8 pb-4 flex items-center justify-between">
@@ -64,48 +104,75 @@ export function SidebarNav({
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-4">
-        <div className="space-y-8">
+      <ScrollArea className="flex-1 px-4 py-2">
+        <div className="space-y-6">
+          {/* Main App Navigation */}
+          <div className="space-y-1">
+            {mainNavItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onSelectView(item.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all text-left",
+                  activeView === item.id 
+                    ? "bg-primary/10 text-primary font-bold" 
+                    : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
+                )}
+              >
+                <item.icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <Separator className="bg-white/5 mx-2" />
+
+          {/* Library Section */}
           <div>
             <div className="flex items-center gap-3 px-3 mb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
               <Library className="w-3 h-3 text-primary" />
-              Your Library
+              Library
             </div>
             
             <div className="space-y-1">
               {stories.length === 0 && (
-                <div className="px-4 py-12 text-center rounded-2xl border border-dashed border-white/5">
-                  <p className="text-xs text-muted-foreground italic leading-relaxed">Your library is silent. Start a new story to begin your legacy.</p>
+                <div className="px-4 py-8 text-center rounded-2xl border border-dashed border-white/5">
+                  <p className="text-[10px] text-muted-foreground italic">Your library is silent.</p>
                 </div>
               )}
               {stories.map((story) => (
-                <div key={story.id} className="group flex flex-col space-y-1">
+                <div key={story.id} className="group flex flex-col space-y-1 mb-2">
                   <div className={cn(
-                    "flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer group",
-                    activeStoryId === story.id ? "bg-white/[0.05] shadow-sm" : "hover:bg-white/[0.02]"
+                    "flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer",
+                    activeStoryId === story.id ? "bg-white/[0.05]" : "hover:bg-white/[0.02]"
                   )}>
                     <div 
                       className="flex items-center gap-3 overflow-hidden flex-1"
-                      onClick={() => activeStoryId !== story.id && onAddChapter(story.id)}
+                      onClick={() => {
+                        onSelectView('editor');
+                        if (activeStoryId !== story.id && story.chapters?.[0]) {
+                          onSelectChapter(story.id, story.chapters[0].id);
+                        }
+                      }}
                     >
-                      <FolderOpen className={cn("w-4 h-4 shrink-0 transition-colors", activeStoryId === story.id ? "text-primary" : "text-muted-foreground")} />
-                      <span className={cn("text-sm font-semibold truncate transition-colors", activeStoryId === story.id ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>
+                      <FolderOpen className={cn("w-4 h-4 shrink-0", activeStoryId === story.id ? "text-primary" : "text-muted-foreground")} />
+                      <span className={cn("text-sm font-semibold truncate", activeStoryId === story.id ? "text-foreground" : "text-muted-foreground")}>
                         {story.title}
                       </span>
                     </div>
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/5">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 hover:bg-white/5">
                           <Settings className="w-4 h-4 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 bg-[#09090b] border-white/5">
-                        <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3 py-2">
+                        <DropdownMenuItem onClick={() => onAddChapter(story.id)} className="gap-3">
                           <Plus className="w-4 h-4" /> New Chapter
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-white/5" />
-                        <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3 py-2 hover:bg-red-500/10">
+                        <DropdownMenuItem onClick={() => onDeleteStory(story.id)} className="text-red-500 gap-3">
                           <Trash2 className="w-4 h-4" /> Delete Project
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -113,24 +180,40 @@ export function SidebarNav({
                   </div>
 
                   {activeStoryId === story.id && (
-                    <div className="ml-6 flex flex-col space-y-1 animate-in slide-in-from-top-2 duration-300">
-                      {story.chapters?.map((chapter) => (
+                    <div className="ml-6 flex flex-col space-y-1 animate-in slide-in-from-top-1">
+                      {/* Sub-navigation for the active project */}
+                      <div className="grid grid-cols-2 gap-1 mb-2">
+                        {projectNavItems.map((pItem) => (
+                           <button
+                             key={pItem.id}
+                             onClick={() => onSelectView(pItem.id as AppView)}
+                             className={cn(
+                               "flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-[9px] font-bold uppercase tracking-tighter transition-all",
+                               activeView === pItem.id && activeStoryId === story.id
+                                 ? "bg-primary/20 text-primary border border-primary/20"
+                                 : "bg-white/[0.02] text-muted-foreground hover:bg-white/5"
+                             )}
+                           >
+                             <pItem.icon className="w-3 h-3" />
+                             {pItem.label.split(' ')[0]}
+                           </button>
+                        ))}
+                      </div>
+
+                      {activeView === 'editor' && story.chapters?.map((chapter) => (
                         <button
                           key={chapter.id}
                           onClick={() => onSelectChapter(story.id, chapter.id)}
                           className={cn(
-                            "group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all text-left relative",
+                            "group flex items-center gap-3 px-4 py-2 rounded-xl text-sm transition-all text-left",
                             activeChapterId === chapter.id 
                               ? "text-primary bg-primary/5 font-bold" 
                               : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
                           )}
                         >
-                          {activeChapterId === chapter.id && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-primary rounded-full" />
-                          )}
-                          <FileText className={cn("w-4 h-4 shrink-0 transition-colors", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/40")} />
+                          <FileText className={cn("w-4 h-4 shrink-0", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/30")} />
                           <span className="truncate">{chapter.title}</span>
-                          <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity", activeChapterId === chapter.id && "opacity-100")} />
+                          <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100", activeChapterId === chapter.id && "opacity-100")} />
                         </button>
                       ))}
                     </div>
@@ -155,19 +238,19 @@ export function SidebarNav({
                   )}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold truncate tracking-tight">{user?.displayName || 'Scribe'}</p>
-                  <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-widest mt-0.5">Author Account</p>
+                  <p className="text-sm font-bold truncate tracking-tight">{user?.displayName || 'Author'}</p>
+                  <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-widest mt-0.5">Sanctuary Account</p>
                 </div>
                 <Settings className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 bg-[#09090b] border-white/5 p-2">
+            <DropdownMenuContent align="end" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl">
               <div className="px-3 py-2 mb-2">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
                 <p className="text-sm font-medium truncate mt-1">{user?.email || 'Anonymous Session'}</p>
               </div>
               <DropdownMenuSeparator className="bg-white/5" />
-              <DropdownMenuItem onClick={onLogout} className="text-red-500 gap-3 py-3 rounded-lg hover:bg-red-500/10">
+              <DropdownMenuItem onClick={onLogout} className="text-red-500 gap-3 py-3 rounded-lg hover:bg-red-500/10 cursor-pointer">
                 <LogOut className="w-4 h-4" /> Terminate Session
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -176,4 +259,8 @@ export function SidebarNav({
       </div>
     </div>
   )
+}
+
+function Separator({ className }: { className?: string }) {
+  return <div className={cn("h-px w-full", className)} />
 }
