@@ -1,0 +1,287 @@
+
+"use client"
+
+import React, { useState, useEffect, useMemo } from 'react'
+import { SidebarNav } from '@/components/writing/sidebar-nav'
+import { Toaster } from '@/components/ui/toaster'
+import { useToast } from '@/hooks/use-toast'
+import { 
+  useAuth, 
+  useUser, 
+  useFirestore, 
+  useCollection, 
+  useMemoFirebase 
+} from '@/firebase'
+import { 
+  collection, 
+  query, 
+  where, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  serverTimestamp, 
+  orderBy
+} from 'firebase/firestore'
+import { signInAnonymously, signOut } from 'firebase/auth'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import { 
+  Loader2, 
+  Menu,
+  PanelLeft,
+  Wifi
+} from 'lucide-react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { Button } from '@/components/ui/button'
+import { Story, Chapter, AppView } from '@/lib/types'
+
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+const ACCESS_PASSWORD = 'darkwrite2025';
+
+export function AppShell({ children }: AppShellProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const auth = useAuth();
+  const { user, loading: authLoading } = useUser();
+  const firestore = useFirestore();
+  const isMobile = useIsMobile();
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  // Sync sidebar state with mobile detection
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true);
+    }
+  }, [isMobile]);
+
+  // Authorization Check
+  useEffect(() => {
+    const saved = localStorage.getItem('dw_authorized');
+    if (saved === 'true') {
+      setIsAuthorized(true);
+    } else if (pathname !== '/') {
+      router.push('/');
+    }
+  }, [pathname, router]);
+
+  // Auth Sync
+  useEffect(() => {
+    if (isAuthorized && !user && !authLoading && !isAuthenticating) {
+      setIsAuthenticating(true);
+      signInAnonymously(auth)
+        .catch(() => {
+          setIsAuthorized(false);
+          localStorage.removeItem('dw_authorized');
+          router.push('/');
+        })
+        .finally(() => setIsAuthenticating(false));
+    }
+  }, [isAuthorized, user, authLoading, auth, isAuthenticating, router]);
+
+  // Global Data
+  const storiesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'stories'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+  }, [firestore, user]);
+
+  const { data: storiesData, loading: storiesLoading } = useCollection<Story>(storiesQuery);
+
+  const activeStoryId = searchParams.get('storyId') || undefined;
+  const activeChapterId = searchParams.get('chapterId') || undefined;
+
+  const chaptersQuery = useMemoFirebase(() => {
+    if (!firestore || !activeStoryId) return null;
+    return query(
+      collection(firestore, 'stories', activeStoryId, 'chapters'),
+      orderBy('order', 'asc')
+    );
+  }, [firestore, activeStoryId]);
+
+  const { data: chaptersData } = useCollection<Chapter>(chaptersQuery);
+
+  const stories = useMemo(() => {
+    if (!storiesData) return [];
+    return storiesData.map(s => ({
+      ...s,
+      chapters: activeStoryId === s.id ? (chaptersData || []) : []
+    }));
+  }, [storiesData, chaptersData, activeStoryId]);
+
+  // Actions
+  const handleAddStory = () => {
+    if (!firestore || !user) return;
+    const storiesRef = collection(firestore, 'stories');
+    addDoc(storiesRef, {
+      title: 'New Manuscript',
+      userId: user.uid,
+      createdAt: serverTimestamp(),
+      status: 'active'
+    }).then((storyDoc) => {
+      const chaptersRef = collection(firestore, 'stories', storyDoc.id, 'chapters');
+      addDoc(chaptersRef, {
+        title: 'Chapter 1',
+        content: '',
+        order: 1,
+        lastSaved: serverTimestamp()
+      }).then((chapDoc) => {
+        router.push(`/editor?storyId=${storyDoc.id}&chapterId=${chapDoc.id}`);
+      });
+    }).catch(() => {
+      toast({ variant: "destructive", title: "Error", description: "Failed to create manuscript." });
+    });
+  };
+
+  const handleAddChapter = (storyId: string) => {
+    if (!firestore) return;
+    const chaptersRef = collection(firestore, 'stories', storyId, 'chapters');
+    const order = (chaptersData?.length || 0) + 1;
+    addDoc(chaptersRef, {
+      title: `Chapter ${order}`,
+      content: '',
+      order,
+      lastSaved: serverTimestamp()
+    }).then((docRef) => {
+      router.push(`/editor?storyId=${storyId}&chapterId=${docRef.id}`);
+    });
+  };
+
+  const handleDeleteStory = (storyId: string) => {
+    if (!firestore) return;
+    deleteDoc(doc(firestore, 'stories', storyId));
+    if (activeStoryId === storyId) {
+      router.push('/dashboard');
+    }
+  };
+
+  const handleRenameStory = (storyId: string, newTitle: string) => {
+    if (!firestore) return;
+    const storyRef = doc(firestore, 'stories', storyId);
+    updateDoc(storyRef, { title: newTitle });
+  };
+
+  const handleLogout = () => {
+    signOut(auth);
+    setIsAuthorized(false);
+    localStorage.removeItem('dw_authorized');
+    router.push('/');
+  };
+
+  if (authLoading || (isAuthorized && !user && isAuthenticating)) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#09090b] gap-6">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="text-[10px] font-bold tracking-[0.3em] text-foreground uppercase animate-pulse">Establishing Secure Sanctuary</p>
+      </div>
+    );
+  }
+
+  if (!isAuthorized && pathname !== '/') return null;
+
+  return (
+    <div className="flex h-screen w-screen bg-[#09090b] overflow-hidden selection:bg-primary/30">
+      {!isMobile && (
+        <div className={cn("transition-all duration-500 ease-in-out shrink-0", isSidebarOpen ? "w-[22rem]" : "w-0 overflow-hidden")}>
+          <SidebarNav 
+            stories={stories}
+            storiesLoading={storiesLoading}
+            activeStoryId={activeStoryId}
+            activeChapterId={activeChapterId}
+            activeView={pathname.split('/')[1] as AppView || 'dashboard'}
+            onSelectView={(v) => router.push(`/${v}`)}
+            onSelectStory={(sid) => router.push(`${pathname}?storyId=${sid}`)}
+            onSelectChapter={(sid, cid) => router.push(`/editor?storyId=${sid}&chapterId=${cid}`)}
+            onAddStory={handleAddStory}
+            onAddChapter={handleAddChapter}
+            onDeleteStory={handleDeleteStory}
+            onRenameStory={handleRenameStory}
+            user={user}
+            onLogout={handleLogout}
+          />
+        </div>
+      )}
+
+      {isMobile && (
+        <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-[300px] bg-[#09090b] border-white/5">
+            <div className="sr-only">
+              <SheetHeader>
+                <SheetTitle>DarkWrite Sanctuary Navigation</SheetTitle>
+                <SheetDescription>Access your manuscripts and writing tools.</SheetDescription>
+              </SheetHeader>
+            </div>
+            <SidebarNav 
+              stories={stories}
+              storiesLoading={storiesLoading}
+              activeStoryId={activeStoryId}
+              activeChapterId={activeChapterId}
+              activeView={pathname.split('/')[1] as AppView || 'dashboard'}
+              onSelectView={(v) => { router.push(`/${v}`); setIsSidebarOpen(false); }}
+              onSelectStory={(sid) => router.push(`${pathname}?storyId=${sid}`)}
+              onSelectChapter={(sid, cid) => {
+                router.push(`/editor?storyId=${sid}&chapterId=${cid}`);
+                setIsSidebarOpen(false);
+              }}
+              onAddStory={handleAddStory}
+              onAddChapter={handleAddChapter}
+              onDeleteStory={handleDeleteStory}
+              onRenameStory={handleRenameStory}
+              user={user}
+              onLogout={handleLogout}
+            />
+          </SheetContent>
+        </Sheet>
+      )}
+
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-w-0">
+        {isMobile && (
+          <div className="absolute top-4 left-4 z-40">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl h-10 w-10 text-white"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
+
+        {!isMobile && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+            className="absolute top-8 left-8 z-40 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl h-10 w-10 text-white hover:bg-white/5"
+          >
+            <PanelLeft className="w-5 h-5" />
+          </Button>
+        )}
+
+        <div className="flex-1 flex flex-col relative overflow-hidden min-w-0">
+          {children}
+          <div className="absolute bottom-6 right-8 z-40 px-4 py-2 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/5 flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity pointer-events-none">
+            <Wifi className="w-3.5 h-3.5 text-green-500" />
+            <span className="text-[9px] font-bold text-white uppercase tracking-[0.2em]">Real-time Sanctuary Active</span>
+          </div>
+        </div>
+      </main>
+      <Toaster />
+    </div>
+  );
+}
