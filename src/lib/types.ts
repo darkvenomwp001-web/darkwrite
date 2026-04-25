@@ -5,6 +5,9 @@ export interface Chapter {
   content: string;
   lastSaved: any; 
   order: number;
+  status?: 'draft' | 'progress' | 'complete';
+  fontFamily?: 'serif' | 'sans' | 'mono';
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl';
 }
 
 export interface Story {
@@ -32,6 +35,13 @@ export interface Location {
   storyId: string;
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  updatedAt: any;
+}
+
 export type WritingMode = 'focus' | 'normal';
 
 export type AppView = 
@@ -45,8 +55,4 @@ export type AppView =
   | 'export' 
   | 'archive' 
   | 'settings'
-  | 'notes'
-  | 'sprint'
-  | 'pacing'
-  | 'dialogue'
-  | 'versions';
+  | 'notes';

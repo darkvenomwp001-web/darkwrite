@@ -24,7 +24,6 @@ export default function EditorPage() {
 
   const [saving, setSaving] = useState(false);
   const [writingMode, setWritingMode] = useState<WritingMode>('normal');
-  const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
 
   const chapterRef = useMemoFirebase(() => {
     if (!firestore || !storyId || !chapterId) return null;
@@ -58,6 +57,17 @@ export default function EditorPage() {
       });
   };
 
+  const handleUpdatePreference = (key: string, value: string) => {
+    if (!firestore || !storyId || !chapterId) return;
+    const ref = doc(firestore, 'stories', storyId, 'chapters', chapterId);
+    updateDoc(ref, { [key]: value, lastSaved: serverTimestamp() })
+      .catch((err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: ref.path, operation: 'update', requestResourceData: { [key]: value }
+        }));
+      });
+  };
+
   return (
     <AppShell>
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-w-0">
@@ -65,6 +75,7 @@ export default function EditorPage() {
           activeChapter={chapterData}
           onUpdateContent={handleUpdateContent}
           onUpdateTitle={handleUpdateTitle}
+          onUpdatePreference={handleUpdatePreference}
           saving={saving}
           writingMode={writingMode}
           onToggleWritingMode={() => setWritingMode(prev => prev === 'normal' ? 'focus' : 'normal')}
