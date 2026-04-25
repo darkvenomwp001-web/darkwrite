@@ -157,7 +157,7 @@ export function WritingEditor({
         
         <div className="flex items-center gap-2">
           <Clock className="w-3 h-3" />
-          <span>Last edited: {activeChapter.lastSaved ? activeChapter.lastSaved.toDate ? activeChapter.lastSaved.toDate().toLocaleTimeString() : new Date(activeChapter.lastSaved).toLocaleTimeString() : '--:--'}</span>
+          <span>Last edited: {activeChapter.lastSaved ? (activeChapter.lastSaved.toDate ? activeChapter.lastSaved.toDate().toLocaleTimeString() : new Date(activeChapter.lastSaved).toLocaleTimeString()) : '--:--'}</span>
         </div>
       </footer>
     </div>

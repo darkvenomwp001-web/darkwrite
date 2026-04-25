@@ -31,7 +31,6 @@ import { Input } from '@/components/ui/input'
 import { KeyRound, Lock, ArrowRight, Loader2, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
-import { cn } from '@/lib/utils'
 
 const ACCESS_PASSWORD = 'darkwrite2025';
 
