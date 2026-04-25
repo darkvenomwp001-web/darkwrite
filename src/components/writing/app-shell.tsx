@@ -20,8 +20,7 @@ import {
   doc, 
   updateDoc, 
   deleteDoc, 
-  serverTimestamp, 
-  orderBy
+  serverTimestamp 
 } from 'firebase/firestore'
 import { signInAnonymously, signOut } from 'firebase/auth'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -55,7 +54,6 @@ export function AppShell({ children }: AppShellProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  // Sync sidebar state with mobile detection
   useEffect(() => {
     if (isMobile) {
       setIsSidebarOpen(false);
@@ -64,7 +62,6 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [isMobile]);
 
-  // Authorization Check
   useEffect(() => {
     const saved = localStorage.getItem('dw_authorized');
     const publicRoutes = ['/', '/darkwritelogin'];
@@ -76,7 +73,6 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [pathname, router]);
 
-  // Auth Sync
   useEffect(() => {
     if (isAuthorized && !user && !authLoading && !isAuthenticating) {
       setIsAuthenticating(true);
@@ -90,13 +86,12 @@ export function AppShell({ children }: AppShellProps) {
     }
   }, [isAuthorized, user, authLoading, auth, isAuthenticating, router]);
 
-  // Global Data
+  // Simplified query to avoid composite index requirements for MVP stability
   const storiesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
       collection(firestore, 'stories'),
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', user.uid)
     );
   }, [firestore, user]);
 
@@ -108,8 +103,7 @@ export function AppShell({ children }: AppShellProps) {
   const chaptersQuery = useMemoFirebase(() => {
     if (!firestore || !activeStoryId) return null;
     return query(
-      collection(firestore, 'stories', activeStoryId, 'chapters'),
-      orderBy('order', 'asc')
+      collection(firestore, 'stories', activeStoryId, 'chapters')
     );
   }, [firestore, activeStoryId]);
 
@@ -117,13 +111,19 @@ export function AppShell({ children }: AppShellProps) {
 
   const stories = useMemo(() => {
     if (!storiesData) return [];
-    return storiesData.map(s => ({
+    // Sort stories by createdAt descending locally to avoid index errors
+    const sorted = [...storiesData].sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
+      const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return sorted.map(s => ({
       ...s,
-      chapters: activeStoryId === s.id ? (chaptersData || []) : []
+      chapters: activeStoryId === s.id ? (chaptersData ? [...chaptersData].sort((a, b) => a.order - b.order) : []) : []
     }));
   }, [storiesData, chaptersData, activeStoryId]);
 
-  // Actions
   const handleAddStory = () => {
     if (!firestore || !user) return;
     const storiesRef = collection(firestore, 'stories');

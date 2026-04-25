@@ -5,7 +5,6 @@ import React, { useState } from 'react'
 import { 
   Plus, 
   FileText, 
-  Settings, 
   Trash2, 
   Library, 
   LogOut, 
@@ -20,10 +19,6 @@ import {
   Archive as ArchiveIcon,
   FolderOpen,
   StickyNote,
-  Timer,
-  Zap,
-  MessageSquare,
-  FileCode,
   Pencil,
   ChevronDown,
   BookOpen,
@@ -140,7 +135,6 @@ export function SidebarNav({
 
       <ScrollArea className="flex-1 px-4 py-2">
         <div className="space-y-8">
-          {/* Main Navigation */}
           <div className="space-y-1">
             <h3 className="px-4 mb-2 text-[8px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Navigation</h3>
             {mainNavItems.map((item) => (
@@ -162,7 +156,6 @@ export function SidebarNav({
 
           <div className="h-px w-full bg-white/5 mx-2" />
 
-          {/* Library (Folders) */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 px-4 text-[8px] font-bold text-muted-foreground uppercase tracking-[0.2em] whitespace-nowrap">
               <Library className="w-3 h-3 text-primary shrink-0" />
@@ -178,11 +171,11 @@ export function SidebarNav({
               ) : stories.length === 0 ? (
                 <div className="px-4 py-8 text-center rounded-2xl border border-dashed border-white/5 mx-2">
                   <p className="text-[10px] text-muted-foreground italic">Your library is silent.</p>
+                  <Button variant="link" onClick={onAddStory} className="text-[10px] text-primary h-auto p-0 mt-2">Begin your first manuscript</Button>
                 </div>
               ) : (
                 stories.map((story) => (
                   <div key={story.id} className="group flex flex-col space-y-1 mb-2">
-                    {/* Story Folder Row */}
                     <div className={cn(
                       "flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer group/item border border-transparent",
                       activeStoryId === story.id ? "bg-white/[0.05] border-white/5" : "hover:bg-white/[0.02]"
@@ -235,10 +228,8 @@ export function SidebarNav({
                       </div>
                     </div>
 
-                    {/* Nested Chapters & Tools */}
                     {activeStoryId === story.id && (
                       <div className="ml-5 mt-1 flex flex-col space-y-1 animate-in slide-in-from-top-1">
-                        {/* Project Modules (Inline Tools) */}
                         <div className="flex gap-1 mb-4 overflow-x-auto py-1 custom-scrollbar">
                           {projectModules.map((pItem) => (
                              <button
@@ -260,7 +251,6 @@ export function SidebarNav({
                           ))}
                         </div>
 
-                        {/* Chapter List */}
                         <div className="space-y-1 pr-2">
                           <div className="flex items-center justify-between px-2 mb-2">
                             <span className="text-[7px] font-bold text-muted-foreground/60 uppercase tracking-widest">Chapters</span>
@@ -330,7 +320,7 @@ export function SidebarNav({
                   <p className="text-xs font-bold truncate tracking-tight text-white">{user?.displayName || 'Author'}</p>
                   <p className="text-[8px] text-muted-foreground truncate uppercase font-bold tracking-widest mt-0.5">Secure Session</p>
                 </div>
-                <Settings className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                <Settings2 className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl">
