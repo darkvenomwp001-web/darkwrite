@@ -80,15 +80,15 @@ export function SidebarNav({
   ] as const;
 
   return (
-    <div className="w-72 border-r border-white/5 bg-[#09090b] flex flex-col h-full font-ui overflow-hidden shadow-2xl relative z-30">
+    <div className="w-full flex flex-col h-full font-ui overflow-hidden bg-[#09090b] border-r border-white/5 shadow-2xl">
       <div className="p-8 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <Edit3 className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+            <Edit3 className="w-5 h-5 text-white" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-xl tracking-tighter leading-none">DarkWrite</span>
-            <span className="text-[10px] font-bold tracking-widest text-primary uppercase mt-1">Sanctuary</span>
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-xl tracking-tighter leading-none truncate">DarkWrite</span>
+            <span className="text-[9px] font-bold tracking-widest text-primary uppercase mt-1 truncate">Sanctuary</span>
           </div>
         </div>
       </div>
@@ -97,10 +97,10 @@ export function SidebarNav({
         <Button 
           onClick={onAddStory}
           variant="outline" 
-          className="w-full h-12 justify-start gap-3 border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all text-muted-foreground hover:text-foreground rounded-xl group"
+          className="w-full h-11 justify-start gap-3 border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all text-muted-foreground hover:text-foreground rounded-xl group"
         >
-          <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-          <span className="text-sm font-medium">New Writing Project</span>
+          <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300 shrink-0" />
+          <span className="text-xs font-semibold truncate">New Writing Project</span>
         </Button>
       </div>
 
@@ -113,24 +113,24 @@ export function SidebarNav({
                 key={item.id}
                 onClick={() => onSelectView(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all text-left",
+                  "w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm transition-all text-left group",
                   activeView === item.id 
-                    ? "bg-primary/10 text-primary font-bold" 
+                    ? "bg-primary/10 text-primary font-bold shadow-sm shadow-primary/5" 
                     : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
                 )}
               >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
+                <item.icon className={cn("w-4 h-4 shrink-0 transition-colors", activeView === item.id ? "text-primary" : "text-muted-foreground/50 group-hover:text-foreground")} />
+                <span className="truncate">{item.label}</span>
               </button>
             ))}
           </div>
 
-          <Separator className="bg-white/5 mx-2" />
+          <div className="h-px w-full bg-white/5 mx-2" />
 
           {/* Library Section */}
           <div>
-            <div className="flex items-center gap-3 px-3 mb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-              <Library className="w-3 h-3 text-primary" />
+            <div className="flex items-center gap-3 px-3 mb-4 text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] whitespace-nowrap">
+              <Library className="w-3 h-3 text-primary shrink-0" />
               Library
             </div>
             
@@ -143,7 +143,7 @@ export function SidebarNav({
               {stories.map((story) => (
                 <div key={story.id} className="group flex flex-col space-y-1 mb-2">
                   <div className={cn(
-                    "flex items-center justify-between px-4 py-3 rounded-xl transition-all cursor-pointer",
+                    "flex items-center justify-between px-4 py-2.5 rounded-xl transition-all cursor-pointer group/item",
                     activeStoryId === story.id ? "bg-white/[0.05]" : "hover:bg-white/[0.02]"
                   )}>
                     <div 
@@ -152,10 +152,12 @@ export function SidebarNav({
                         onSelectView('editor');
                         if (activeStoryId !== story.id && story.chapters?.[0]) {
                           onSelectChapter(story.id, story.chapters[0].id);
+                        } else {
+                          setActiveStoryId(story.id);
                         }
                       }}
                     >
-                      <FolderOpen className={cn("w-4 h-4 shrink-0", activeStoryId === story.id ? "text-primary" : "text-muted-foreground")} />
+                      <FolderOpen className={cn("w-4 h-4 shrink-0", activeStoryId === story.id ? "text-primary" : "text-muted-foreground/40")} />
                       <span className={cn("text-sm font-semibold truncate", activeStoryId === story.id ? "text-foreground" : "text-muted-foreground")}>
                         {story.title}
                       </span>
@@ -163,8 +165,8 @@ export function SidebarNav({
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 hover:bg-white/5">
-                          <Settings className="w-4 h-4 text-muted-foreground" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover/item:opacity-100 hover:bg-white/5 shrink-0 transition-opacity">
+                          <Settings className="w-3.5 h-3.5 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 bg-[#09090b] border-white/5">
@@ -180,22 +182,25 @@ export function SidebarNav({
                   </div>
 
                   {activeStoryId === story.id && (
-                    <div className="ml-6 flex flex-col space-y-1 animate-in slide-in-from-top-1">
-                      {/* Sub-navigation for the active project */}
-                      <div className="grid grid-cols-2 gap-1 mb-2">
+                    <div className="ml-5 flex flex-col space-y-1 animate-in slide-in-from-top-1">
+                      {/* Grid for project nav items on small space */}
+                      <div className="grid grid-cols-3 gap-1 mb-2 px-1">
                         {projectNavItems.map((pItem) => (
                            <button
                              key={pItem.id}
+                             title={pItem.label}
                              onClick={() => onSelectView(pItem.id as AppView)}
                              className={cn(
-                               "flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-[9px] font-bold uppercase tracking-tighter transition-all",
+                               "flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all border shrink-0",
                                activeView === pItem.id && activeStoryId === story.id
-                                 ? "bg-primary/20 text-primary border border-primary/20"
-                                 : "bg-white/[0.02] text-muted-foreground hover:bg-white/5"
+                                 ? "bg-primary/20 text-primary border-primary/20"
+                                 : "bg-white/[0.01] text-muted-foreground border-transparent hover:bg-white/5"
                              )}
                            >
-                             <pItem.icon className="w-3 h-3" />
-                             {pItem.label.split(' ')[0]}
+                             <pItem.icon className="w-3.5 h-3.5" />
+                             <span className="text-[8px] font-bold uppercase tracking-tighter truncate w-full text-center">
+                               {pItem.label.split(' ')[0]}
+                             </span>
                            </button>
                         ))}
                       </div>
@@ -205,15 +210,15 @@ export function SidebarNav({
                           key={chapter.id}
                           onClick={() => onSelectChapter(story.id, chapter.id)}
                           className={cn(
-                            "group flex items-center gap-3 px-4 py-2 rounded-xl text-sm transition-all text-left",
+                            "group flex items-center gap-3 px-4 py-2 rounded-xl text-xs transition-all text-left",
                             activeChapterId === chapter.id 
                               ? "text-primary bg-primary/5 font-bold" 
                               : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
                           )}
                         >
-                          <FileText className={cn("w-4 h-4 shrink-0", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/30")} />
+                          <FileText className={cn("w-3.5 h-3.5 shrink-0", activeChapterId === chapter.id ? "text-primary" : "text-muted-foreground/30")} />
                           <span className="truncate">{chapter.title}</span>
-                          <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100", activeChapterId === chapter.id && "opacity-100")} />
+                          <ChevronRight className={cn("w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 shrink-0", activeChapterId === chapter.id && "opacity-100")} />
                         </button>
                       ))}
                     </div>
@@ -226,28 +231,28 @@ export function SidebarNav({
       </ScrollArea>
 
       <div className="p-6 mt-auto">
-        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+        <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-4 w-full text-left group">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm overflow-hidden shadow-inner">
+              <button className="flex items-center gap-3 w-full text-left group overflow-hidden">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0 overflow-hidden shadow-inner">
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
                   ) : (
-                    user?.displayName?.charAt(0) || <User className="w-5 h-5" />
+                    user?.displayName?.charAt(0) || <User className="w-4 h-4" />
                   )}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold truncate tracking-tight">{user?.displayName || 'Author'}</p>
-                  <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-widest mt-0.5">Sanctuary Account</p>
+                  <p className="text-xs font-bold truncate tracking-tight">{user?.displayName || 'Author'}</p>
+                  <p className="text-[8px] text-muted-foreground truncate uppercase font-bold tracking-widest mt-0.5">Scribe Session</p>
                 </div>
-                <Settings className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                <Settings className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl">
               <div className="px-3 py-2 mb-2">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
-                <p className="text-sm font-medium truncate mt-1">{user?.email || 'Anonymous Session'}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
+                <p className="text-xs font-medium truncate mt-1">{user?.email || 'Anonymous Session'}</p>
               </div>
               <DropdownMenuSeparator className="bg-white/5" />
               <DropdownMenuItem onClick={onLogout} className="text-red-500 gap-3 py-3 rounded-lg hover:bg-red-500/10 cursor-pointer">
@@ -259,8 +264,4 @@ export function SidebarNav({
       </div>
     </div>
   )
-}
-
-function Separator({ className }: { className?: string }) {
-  return <div className={cn("h-px w-full", className)} />
 }
