@@ -66,7 +66,8 @@ export function AppShell({ children }: AppShellProps) {
 
   useEffect(() => {
     const saved = localStorage.getItem('dw_authorized');
-    const publicRoutes = ['/', '/darkwritelogin'];
+    // ONLY the login page is allowed without authorization
+    const publicRoutes = ['/darkwritelogin'];
     
     if (saved === 'true') {
       setIsAuthorized(true);
@@ -190,25 +191,25 @@ export function AppShell({ children }: AppShellProps) {
     signOut(auth);
     setIsAuthorized(false);
     localStorage.removeItem('dw_authorized');
-    router.push('/');
+    router.push('/darkwritelogin');
   };
 
   if (!checkFinished || authLoading || (isAuthorized && !user && isAuthenticating)) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#09090b] gap-6">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-[10px] font-bold tracking-[0.3em] text-foreground uppercase animate-pulse">Establishing Secure Sanctuary</p>
+        <p className="text-[10px] font-bold tracking-[0.3em] text-foreground uppercase animate-pulse">Verifying Integrity</p>
       </div>
     );
   }
 
-  const publicRoutes = ['/', '/darkwritelogin'];
-  if (!isAuthorized && !publicRoutes.includes(pathname)) return null;
+  // If unauthorized and not on the login page, the useEffect will handle the redirect
+  if (!isAuthorized && pathname !== '/darkwritelogin') return null;
 
   return (
     <div className="flex h-screen w-screen bg-[#09090b] overflow-hidden selection:bg-primary/30">
       {!isMobile && isAuthorized && (
-        <div className={cn("transition-all duration-500 ease-in-out shrink-0 relative z-50", isSidebarOpen ? "w-[22rem]" : "w-0 overflow-hidden")}>
+        <div className={cn("transition-all duration-500 ease-in-out shrink-0 relative z-[100]", isSidebarOpen ? "w-[22rem]" : "w-0 overflow-hidden")}>
           <SidebarNav 
             stories={stories}
             storiesLoading={storiesLoading}
@@ -230,7 +231,7 @@ export function AppShell({ children }: AppShellProps) {
 
       {isMobile && isAuthorized && (
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-[300px] bg-[#09090b] border-white/5">
+          <SheetContent side="left" className="p-0 w-[300px] bg-[#09090b] border-white/5 z-[100]">
             <div className="sr-only">
               <SheetHeader>
                 <SheetTitle>DarkWrite Sanctuary Navigation</SheetTitle>
@@ -260,7 +261,7 @@ export function AppShell({ children }: AppShellProps) {
         </Sheet>
       )}
 
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-w-0">
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-w-0 z-10">
         {isMobile && isAuthorized && (
           <div className="absolute top-4 left-4 z-40">
             <Button 
