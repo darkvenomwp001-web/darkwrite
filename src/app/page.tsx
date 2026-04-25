@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
@@ -60,7 +59,12 @@ import {
   Target,
   MessageSquare,
   Clock,
-  LayoutDashboard
+  LayoutDashboard,
+  Library,
+  Timer,
+  FileText,
+  Type,
+  Settings2
 } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
