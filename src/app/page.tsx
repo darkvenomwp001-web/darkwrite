@@ -31,7 +31,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { 
   KeyRound, 
   Lock, 
@@ -331,7 +331,7 @@ export default function DarkWriteApp() {
             <div className="w-16 h-16 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/30">
               <Lock className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tighter">DarkWrite</h1>
+            <h1 className="text-3xl font-bold tracking-tighter text-foreground">DarkWrite</h1>
             <p className="text-muted-foreground text-xs md:text-sm">A private sanctuary for the dedicated scribe.</p>
           </div>
 
@@ -350,11 +350,11 @@ export default function DarkWriteApp() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <Button size="lg" type="submit" className="w-full h-12 text-base font-bold rounded-xl">
-              Unlock <ArrowRight className="w-4 h-4 ml-2" />
+            <Button size="lg" type="submit" className="w-full h-12 text-base font-bold rounded-xl shadow-lg shadow-primary/20">
+              Unlock Sanctuary <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </form>
-          <p className="text-center text-[9px] uppercase tracking-[0.2em] text-muted-foreground italic">"Only the worthy may scribe."</p>
+          <p className="text-center text-[9px] uppercase tracking-[0.2em] text-muted-foreground italic">"Words are sacred. Only the worthy may scribe."</p>
         </div>
       </div>
     );
@@ -390,7 +390,13 @@ export default function DarkWriteApp() {
       {/* Mobile Sidebar (Sheet) */}
       {isMobile && writingMode === 'normal' && (
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-72 bg-[#09090b] border-white/5">
+          <SheetContent side="left" className="p-0 w-[280px] bg-[#09090b] border-white/5">
+            <div className="sr-only">
+              <SheetHeader>
+                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetDescription>Access your stories, manuscripts, and account settings.</SheetDescription>
+              </SheetHeader>
+            </div>
             <SidebarNav 
               stories={stories}
               activeStoryId={activeStoryId}
@@ -477,7 +483,13 @@ export default function DarkWriteApp() {
         {/* AI Panel (Mobile Sheet) */}
         {isMobile && writingMode === 'normal' && activeView === 'editor' && (
           <Sheet open={isAIPanelOpen} onOpenChange={setIsAIPanelOpen}>
-            <SheetContent side="right" className="p-0 w-80 bg-[#09090b] border-white/5">
+            <SheetContent side="right" className="p-0 w-[300px] bg-[#09090b] border-white/5">
+              <div className="sr-only">
+                <SheetHeader>
+                  <SheetTitle>AI Writing Companion</SheetTitle>
+                  <SheetDescription>Get grammar suggestions and writing inspiration.</SheetDescription>
+                </SheetHeader>
+              </div>
               <AIPanel currentText={activeChapter?.content || ''} />
             </SheetContent>
           </Sheet>
