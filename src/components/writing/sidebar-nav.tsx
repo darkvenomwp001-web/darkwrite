@@ -22,8 +22,7 @@ import {
   Pencil,
   ChevronDown,
   BookOpen,
-  Settings2,
-  Download
+  Settings2
 } from 'lucide-react'
 import { Story, AppView } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -109,7 +108,7 @@ export function SidebarNav({
   };
 
   return (
-    <div className="w-full flex flex-col h-full font-ui overflow-hidden bg-[#09090b] border-r border-white/5 shadow-2xl relative z-30">
+    <div className="w-full flex flex-col h-full font-ui overflow-hidden bg-[#09090b] border-r border-white/5 shadow-2xl relative z-[100]">
       <div className="p-8 pb-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
@@ -303,7 +302,7 @@ export function SidebarNav({
         </div>
       </ScrollArea>
 
-      <div className="p-6 mt-auto shrink-0 relative z-40">
+      <div className="p-6 mt-auto shrink-0 relative z-[105]">
         <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -325,7 +324,7 @@ export function SidebarNav({
                 <Settings2 className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl mb-2 z-50">
+            <DropdownMenuContent align="end" side="top" className="w-64 bg-[#09090b] border-white/5 p-2 shadow-2xl rounded-2xl mb-2 z-[150]">
               <div className="px-3 py-2 mb-2">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Signed in as</p>
                 <p className="text-xs font-medium truncate mt-1 text-white">{user?.email || 'Anonymous Session'}</p>
@@ -343,7 +342,7 @@ export function SidebarNav({
       </div>
 
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="bg-[#09090b] border-white/5 text-white rounded-2xl max-w-sm z-[60]">
+        <DialogContent className="bg-[#09090b] border-white/5 text-white rounded-2xl max-w-sm z-[200]">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Rename Manuscript Folder</DialogTitle>
           </DialogHeader>

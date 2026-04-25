@@ -6,48 +6,57 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useAuth, useUser } from '@/firebase'
+import { signInAnonymously } from 'firebase/auth'
 import { KeyRound, Lock, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 
 const ACCESS_PASSWORD = '08172004';
 
 export default function DarkWriteLoginPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const { user, loading: authLoading } = useUser();
   const { toast } = useToast();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('dw_authorized');
-    if (saved === 'true') {
+    if (!authLoading && user) {
       router.push('/dashboard');
     }
-  }, [router]);
+  }, [user, authLoading, router]);
 
   const handleUnlock = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (isVerifying) return;
+    if (isVerifying || !auth) return;
+
+    if (password !== ACCESS_PASSWORD) {
+      toast({ 
+        variant: "destructive", 
+        title: "Invalid Access Key", 
+        description: "The sanctuary remains closed to the unauthorized." 
+      });
+      return;
+    }
 
     setIsVerifying(true);
     
-    // Simulate a brief secure handshake
-    setTimeout(() => {
-      if (password === ACCESS_PASSWORD) {
-        localStorage.setItem('dw_authorized', 'true');
-        toast({ 
-          title: "Sanctuary Unlocked", 
-          description: "Welcome back, scribe. Your manuscripts are ready." 
-        });
-        router.push('/dashboard');
-      } else {
-        toast({ 
-          variant: "destructive", 
-          title: "Invalid Access Key", 
-          description: "The sanctuary remains closed to the unauthorized." 
-        });
-        setIsVerifying(false);
-      }
-    }, 800);
+    try {
+      await signInAnonymously(auth);
+      toast({ 
+        title: "Sanctuary Unlocked", 
+        description: "Welcome back, scribe. Your manuscripts are ready." 
+      });
+      router.push('/dashboard');
+    } catch (error) {
+      toast({ 
+        variant: "destructive", 
+        title: "Connection Error", 
+        description: "Failed to establish a secure handshake with the sanctuary." 
+      });
+      setIsVerifying(false);
+    }
   };
 
   return (

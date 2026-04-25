@@ -3,20 +3,22 @@
 
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@/firebase'
 import { Loader2 } from 'lucide-react'
 
 export default function RootLandingPage() {
   const router = useRouter();
+  const { user, loading } = useUser();
 
   useEffect(() => {
-    const saved = localStorage.getItem('dw_authorized');
-    if (saved === 'true') {
-      router.push('/dashboard');
-    } else {
-      // Force redirection to login terminal for all new visitors
-      router.push('/darkwritelogin');
+    if (!loading) {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        router.push('/darkwritelogin');
+      }
     }
-  }, [router]);
+  }, [user, loading, router]);
 
   return (
     <div className="min-h-screen w-full bg-[#09090b] flex flex-col items-center justify-center gap-6">
