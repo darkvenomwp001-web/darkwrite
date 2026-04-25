@@ -1,0 +1,74 @@
+
+{
+  "entities": {
+    "Story": {
+      "title": "Story",
+      "description": "A writing project or book",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the story"
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this story"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the story was created"
+        }
+      },
+      "required": [
+        "title",
+        "userId",
+        "createdAt"
+      ]
+    },
+    "Chapter": {
+      "title": "Chapter",
+      "description": "A chapter within a story",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the chapter"
+        },
+        "content": {
+          "type": "string",
+          "description": "The text content of the chapter"
+        },
+        "lastSaved": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the chapter was last updated"
+        },
+        "order": {
+          "type": "number",
+          "description": "The display order of the chapter"
+        }
+      },
+      "required": [
+        "title",
+        "content",
+        "lastSaved"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Root collection for all stories"
+    },
+    "/stories/{storyId}/chapters/{chapterId}": {
+      "schema": "Chapter",
+      "description": "Sub-collection of chapters for each story"
+    }
+  }
+}

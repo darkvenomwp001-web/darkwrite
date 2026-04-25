@@ -1,141 +1,247 @@
+
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Story, Chapter } from '@/lib/types'
 import { SidebarNav } from '@/components/writing/sidebar-nav'
 import { WritingEditor } from '@/components/writing/writing-editor'
 import { AIPanel } from '@/components/writing/ai-panel'
 import { Toaster } from '@/components/ui/toaster'
 import { useToast } from '@/hooks/use-toast'
-
-const INITIAL_STORIES: Story[] = [
-  {
-    id: 'story-1',
-    title: 'Echoes of the Void',
-    createdAt: new Date(),
-    chapters: [
-      {
-        id: 'chap-1',
-        title: 'The Unseen Door',
-        content: 'It was a door that shouldn\'t have existed. In the middle of the obsidian plains, beneath a sky filled with dying stars, the mahogany threshold stood firm against the howling winds of the void...',
-        lastSaved: new Date()
-      },
-      {
-        id: 'chap-2',
-        title: 'Whispers in Silence',
-        content: 'The silence was loud. Not the empty silence of a desert night, but a heavy, purposeful quiet that seemed to lean in close, listening to your heartbeat...',
-        lastSaved: new Date()
-      }
-    ]
-  }
-];
+import { 
+  useAuth, 
+  useUser, 
+  useFirestore, 
+  useCollection, 
+  useDoc 
+} from '@/firebase'
+import { 
+  collection, 
+  query, 
+  where, 
+  addDoc, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  serverTimestamp, 
+  orderBy,
+  Firestore
+} from 'firebase/firestore'
+import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth'
+import { Button } from '@/components/ui/button'
+import { LogIn, Sparkles } from 'lucide-react'
+import { errorEmitter } from '@/firebase/error-emitter'
+import { FirestorePermissionError } from '@/firebase/errors'
 
 export default function DarkWriteApp() {
   const { toast } = useToast();
-  const [stories, setStories] = useState<Story[]>(INITIAL_STORIES);
-  const [activeStoryId, setActiveStoryId] = useState<string | undefined>(INITIAL_STORIES[0].id);
-  const [activeChapterId, setActiveChapterId] = useState<string | undefined>(INITIAL_STORIES[0].chapters[0].id);
+  const { auth } = useAuth();
+  const { user, loading: authLoading } = useUser();
+  const { firestore } = useFirestore();
+
+  const [activeStoryId, setActiveStoryId] = useState<string | undefined>();
+  const [activeChapterId, setActiveChapterId] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
 
-  // Derived state
-  const activeStory = stories.find(s => s.id === activeStoryId);
-  const activeChapter = activeStory?.chapters.find(c => c.id === activeChapterId) || null;
+  // Fetch Stories
+  const storiesQuery = useMemo(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'stories'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+  }, [firestore, user]);
 
-  // Real-time auto-save effect
-  useEffect(() => {
-    if (!activeChapter) return;
-    
-    const timer = setTimeout(() => {
-      setSaving(true);
-      // Simulate API call
-      setTimeout(() => {
-        setSaving(false);
-      }, 600);
-    }, 1500);
+  const { data: storiesData, loading: storiesLoading } = useCollection<Story>(storiesQuery);
 
-    return () => clearTimeout(timer);
-  }, [activeChapter?.content, activeChapter?.title]);
+  // Fetch Chapters for active story
+  const chaptersQuery = useMemo(() => {
+    if (!firestore || !activeStoryId) return null;
+    return query(
+      collection(firestore, 'stories', activeStoryId, 'chapters'),
+      orderBy('order', 'asc')
+    );
+  }, [firestore, activeStoryId]);
+
+  const { data: chaptersData } = useCollection<Chapter>(chaptersQuery);
+
+  // Active Data Mapping
+  const stories = useMemo(() => {
+    if (!storiesData) return [];
+    return storiesData.map(s => ({
+      ...s,
+      chapters: activeStoryId === s.id ? (chaptersData || []) : []
+    }));
+  }, [storiesData, chaptersData, activeStoryId]);
+
+  const activeChapter = useMemo(() => {
+    if (!chaptersData || !activeChapterId) return null;
+    return chaptersData.find(c => c.id === activeChapterId) || null;
+  }, [chaptersData, activeChapterId]);
+
+  const handleLogin = async () => {
+    if (!auth) return;
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error) {
+      console.error("Login failed", error);
+    }
+  };
 
   const handleUpdateContent = (content: string) => {
-    if (!activeStoryId || !activeChapterId) return;
+    if (!firestore || !activeStoryId || !activeChapterId) return;
 
-    setStories(prev => prev.map(story => {
-      if (story.id !== activeStoryId) return story;
-      return {
-        ...story,
-        chapters: story.chapters.map(chapter => {
-          if (chapter.id !== activeChapterId) return chapter;
-          return { ...chapter, content, lastSaved: new Date() };
-        })
-      };
-    }));
+    const chapterRef = doc(firestore, 'stories', activeStoryId, 'chapters', activeChapterId);
+    setSaving(true);
+    
+    updateDoc(chapterRef, {
+      content,
+      lastSaved: serverTimestamp()
+    }).then(() => {
+      setSaving(false);
+    }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: chapterRef.path,
+        operation: 'update',
+        requestResourceData: { content }
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      setSaving(false);
+    });
   };
 
   const handleUpdateTitle = (title: string) => {
-    if (!activeStoryId || !activeChapterId) return;
+    if (!firestore || !activeStoryId || !activeChapterId) return;
 
-    setStories(prev => prev.map(story => {
-      if (story.id !== activeStoryId) return story;
-      return {
-        ...story,
-        chapters: story.chapters.map(chapter => {
-          if (chapter.id !== activeChapterId) return chapter;
-          return { ...chapter, title, lastSaved: new Date() };
-        })
-      };
-    }));
+    const chapterRef = doc(firestore, 'stories', activeStoryId, 'chapters', activeChapterId);
+    
+    updateDoc(chapterRef, {
+      title,
+      lastSaved: serverTimestamp()
+    }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: chapterRef.path,
+        operation: 'update',
+        requestResourceData: { title }
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
   };
 
   const handleAddStory = () => {
-    const newStory: Story = {
-      id: `story-${Date.now()}`,
+    if (!firestore || !user) return;
+
+    const storiesRef = collection(firestore, 'stories');
+    const newStoryData = {
       title: 'Untitled Story',
-      createdAt: new Date(),
-      chapters: [
-        {
-          id: `chap-${Date.now()}`,
-          title: 'Chapter 1',
-          content: '',
-          lastSaved: new Date()
-        }
-      ]
+      userId: user.uid,
+      createdAt: serverTimestamp()
     };
-    setStories(prev => [...prev, newStory]);
-    setActiveStoryId(newStory.id);
-    setActiveChapterId(newStory.chapters[0].id);
-    toast({
-      title: "Story Created",
-      description: "A new blank canvas awaits your words.",
+
+    addDoc(storiesRef, newStoryData).then((storyDoc) => {
+      // Create initial chapter
+      const chaptersRef = collection(firestore, 'stories', storyDoc.id, 'chapters');
+      addDoc(chaptersRef, {
+        title: 'Chapter 1',
+        content: '',
+        order: 1,
+        lastSaved: serverTimestamp()
+      }).then((chapDoc) => {
+        setActiveStoryId(storyDoc.id);
+        setActiveChapterId(chapDoc.id);
+        toast({
+          title: "Story Created",
+          description: "A new blank canvas awaits your words.",
+        });
+      });
+    }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: storiesRef.path,
+        operation: 'create',
+        requestResourceData: newStoryData
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
 
   const handleAddChapter = (storyId: string) => {
-    setStories(prev => prev.map(story => {
-      if (story.id !== storyId) return story;
-      const newChapter: Chapter = {
-        id: `chap-${Date.now()}`,
-        title: `Chapter ${story.chapters.length + 1}`,
-        content: '',
-        lastSaved: new Date()
-      };
-      return {
-        ...story,
-        chapters: [...story.chapters, newChapter]
-      };
-    }));
-    toast({
-      title: "Chapter Added",
-      description: "New chapter appended to your story.",
+    if (!firestore) return;
+
+    const chaptersRef = collection(firestore, 'stories', storyId, 'chapters');
+    const order = (chaptersData?.length || 0) + 1;
+    const newChapterData = {
+      title: `Chapter ${order}`,
+      content: '',
+      order,
+      lastSaved: serverTimestamp()
+    };
+
+    addDoc(chaptersRef, newChapterData).then((docRef) => {
+      setActiveStoryId(storyId);
+      setActiveChapterId(docRef.id);
+      toast({
+        title: "Chapter Added",
+        description: "New chapter appended to your story.",
+      });
+    }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: chaptersRef.path,
+        operation: 'create',
+        requestResourceData: newChapterData
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
   };
 
   const handleDeleteStory = (storyId: string) => {
-    setStories(prev => prev.filter(s => s.id !== storyId));
-    if (activeStoryId === storyId) {
-      setActiveStoryId(undefined);
-      setActiveChapterId(undefined);
-    }
+    if (!firestore) return;
+    const storyRef = doc(firestore, 'stories', storyId);
+    deleteDoc(storyRef).then(() => {
+      if (activeStoryId === storyId) {
+        setActiveStoryId(undefined);
+        setActiveChapterId(undefined);
+      }
+      toast({
+        title: "Story Deleted",
+        description: "Your story has been removed.",
+      });
+    }).catch(async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: storyRef.path,
+        operation: 'delete'
+      });
+      errorEmitter.emit('permission-error', permissionError);
+    });
   };
+
+  if (authLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4 text-center">
+        <div className="max-w-md space-y-6">
+          <div className="w-20 h-20 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/20">
+            <Sparkles className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight">DarkWrite</h1>
+          <p className="text-muted-foreground text-lg">
+            A focused, AI-powered writing sanctuary for modern authors. Sign in to start your masterpiece.
+          </p>
+          <Button onClick={handleLogin} size="lg" className="w-full gap-2 text-lg h-12">
+            <LogIn className="w-5 h-5" />
+            Sign in with Google
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/30">
@@ -150,6 +256,8 @@ export default function DarkWriteApp() {
         onAddStory={handleAddStory}
         onAddChapter={handleAddChapter}
         onDeleteStory={handleDeleteStory}
+        user={user}
+        onLogout={() => auth && signOut(auth)}
       />
       
       <main className="flex-1 flex flex-row overflow-hidden">
