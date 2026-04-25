@@ -16,8 +16,8 @@ import {
   Globe,
   GitGraph,
   BarChart3,
-  Search,
-  Archive,
+  Search as SearchIcon,
+  Archive as ArchiveIcon,
   FolderOpen,
   StickyNote,
   Timer,
@@ -91,8 +91,8 @@ export function SidebarNav({
 
   const mainNavItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'search', icon: Search, label: 'Global Search' },
-    { id: 'archive', icon: Archive, label: 'Archive' },
+    { id: 'search', icon: SearchIcon, label: 'Search' },
+    { id: 'archive', icon: ArchiveIcon, label: 'Archive' },
   ] as const;
 
   const projectModules = [
