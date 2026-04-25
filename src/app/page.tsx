@@ -29,7 +29,7 @@ import {
 import { signInAnonymously, signOut } from 'firebase/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sparkles, KeyRound, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { KeyRound, Lock, ArrowRight, Loader2 } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
 
@@ -45,12 +45,12 @@ export default function DarkWriteApp() {
   const [activeChapterId, setActiveChapterId] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
   
-  // Gatekeeper state
+  // Authorization state
   const [password, setPassword] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // Initial check for authorization
+  // Load initial authorization from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('dw_authorized');
     if (saved === 'true') {
@@ -58,7 +58,7 @@ export default function DarkWriteApp() {
     }
   }, []);
 
-  // Automatic anonymous sign-in if authorized but not logged in
+  // Automatic anonymous sign-in if authorized but no Firebase session yet
   useEffect(() => {
     if (isAuthorized && !user && !authLoading && !isAuthenticating) {
       setIsAuthenticating(true);
@@ -72,7 +72,7 @@ export default function DarkWriteApp() {
     }
   }, [isAuthorized, user, authLoading, auth, isAuthenticating]);
 
-  // Fetch Stories
+  // Firestore Data Fetching
   const storiesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -84,7 +84,6 @@ export default function DarkWriteApp() {
 
   const { data: storiesData } = useCollection<Story>(storiesQuery);
 
-  // Fetch Chapters for active story
   const chaptersQuery = useMemoFirebase(() => {
     if (!firestore || !activeStoryId) return null;
     return query(
@@ -95,7 +94,7 @@ export default function DarkWriteApp() {
 
   const { data: chaptersData } = useCollection<Chapter>(chaptersQuery);
 
-  // Active Data Mapping
+  // Mapped Data for UI
   const stories = useMemo(() => {
     if (!storiesData) return [];
     return storiesData.map(s => ({
@@ -109,8 +108,10 @@ export default function DarkWriteApp() {
     return chaptersData.find(c => c.id === activeChapterId) || null;
   }, [chaptersData, activeChapterId]);
 
+  // Actions
   const handleUnlock = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
     if (password === ACCESS_PASSWORD) {
       setIsAuthenticating(true);
       try {
@@ -124,15 +125,16 @@ export default function DarkWriteApp() {
       } catch (err) {
         toast({
           variant: "destructive",
-          title: "Authentication Error",
-          description: "Could not establish a secure session.",
+          title: "Access Error",
+          description: "Could not open the sanctuary. Please try again.",
         });
+      } finally {
         setIsAuthenticating(false);
       }
     } else {
       toast({
         variant: "destructive",
-        title: "Invalid Access Key",
+        title: "Invalid Key",
         description: "The path remains closed.",
       });
     }
@@ -140,55 +142,41 @@ export default function DarkWriteApp() {
 
   const handleUpdateContent = (content: string) => {
     if (!firestore || !activeStoryId || !activeChapterId) return;
-
     const chapterRef = doc(firestore, 'stories', activeStoryId, 'chapters', activeChapterId);
     setSaving(true);
-    
-    updateDoc(chapterRef, {
-      content,
-      lastSaved: serverTimestamp()
-    }).then(() => {
-      setSaving(false);
-    }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        path: chapterRef.path,
-        operation: 'update',
-        requestResourceData: { content }
+    updateDoc(chapterRef, { content, lastSaved: serverTimestamp() })
+      .then(() => setSaving(false))
+      .catch((err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: chapterRef.path,
+          operation: 'update',
+          requestResourceData: { content }
+        }));
+        setSaving(false);
       });
-      errorEmitter.emit('permission-error', permissionError);
-      setSaving(false);
-    });
   };
 
   const handleUpdateTitle = (title: string) => {
     if (!firestore || !activeStoryId || !activeChapterId) return;
-
     const chapterRef = doc(firestore, 'stories', activeStoryId, 'chapters', activeChapterId);
-    
-    updateDoc(chapterRef, {
-      title,
-      lastSaved: serverTimestamp()
-    }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        path: chapterRef.path,
-        operation: 'update',
-        requestResourceData: { title }
+    updateDoc(chapterRef, { title, lastSaved: serverTimestamp() })
+      .catch((err) => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+          path: chapterRef.path,
+          operation: 'update',
+          requestResourceData: { title }
+        }));
       });
-      errorEmitter.emit('permission-error', permissionError);
-    });
   };
 
   const handleAddStory = () => {
     if (!firestore || !user) return;
-
     const storiesRef = collection(firestore, 'stories');
-    const newStoryData = {
+    addDoc(storiesRef, {
       title: 'New Story',
       userId: user.uid,
       createdAt: serverTimestamp()
-    };
-
-    addDoc(storiesRef, newStoryData).then((storyDoc) => {
+    }).then((storyDoc) => {
       const chaptersRef = collection(firestore, 'stories', storyDoc.id, 'chapters');
       addDoc(chaptersRef, {
         title: 'Chapter 1',
@@ -227,40 +215,39 @@ export default function DarkWriteApp() {
     localStorage.removeItem('dw_authorized');
   };
 
-  // Global loading state while checking initial auth or password-triggered login
-  // We show the loader if Firebase is loading OR if we are authorized but waiting for the session to initialize
-  if (authLoading || (isAuthorized && !user)) {
+  // Loading Screen: Show when we are verifying password or signing in
+  if (authLoading || (isAuthorized && !user && isAuthenticating)) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-muted-foreground animate-pulse">Opening the Sanctuary...</p>
+        <p className="text-muted-foreground animate-pulse font-medium tracking-wide">Opening the Sanctuary...</p>
       </div>
     );
   }
 
-  // Password Gate - Shown only if we don't have a user session AND we aren't already authorized
+  // Password Gate: Show only if not signed in
   if (!user) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="w-24 h-24 rounded-3xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/30 animate-in fade-in zoom-in duration-700">
-            <Lock className="w-12 h-12 text-white" />
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4 font-ui">
+        <div className="max-w-md w-full space-y-8 text-center animate-in fade-in duration-700">
+          <div className="w-20 h-20 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/20">
+            <Lock className="w-10 h-10 text-white" />
           </div>
           
           <div className="space-y-3">
-            <h1 className="text-5xl font-bold tracking-tighter">DarkWrite</h1>
-            <p className="text-muted-foreground text-lg">A private sanctuary for the dedicated scribe.</p>
+            <h1 className="text-4xl font-bold tracking-tight">DarkWrite</h1>
+            <p className="text-muted-foreground">A private sanctuary for the dedicated scribe.</p>
           </div>
 
-          <form onSubmit={handleUnlock} className="space-y-4 pt-6 animate-in slide-in-from-bottom-8 duration-1000">
+          <form onSubmit={handleUnlock} className="space-y-4 pt-4">
             <div className="relative group">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input
                 type="password"
-                placeholder="Sanctuary Key"
+                placeholder="Access Key"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-14 bg-card border-border/50 focus:border-primary transition-all text-xl rounded-xl shadow-inner"
+                className="pl-12 h-12 bg-card border-border/50 focus:border-primary transition-all rounded-xl"
                 autoFocus
               />
             </div>
@@ -268,9 +255,9 @@ export default function DarkWriteApp() {
               size="lg" 
               type="submit"
               disabled={isAuthenticating}
-              className="w-full h-14 gap-2 text-xl font-semibold shadow-xl shadow-primary/20 rounded-xl transition-all active:scale-95"
+              className="w-full h-12 gap-2 text-lg font-semibold shadow-lg shadow-primary/20 rounded-xl transition-all active:scale-95"
             >
-              {isAuthenticating ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Unlock Sanctuary <ArrowRight className="w-6 h-6" /></>}
+              {isAuthenticating ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Unlock Sanctuary <ArrowRight className="w-5 h-5" /></>}
             </Button>
             <p className="text-sm text-muted-foreground/60 italic pt-6">
               "Words are sacred. Only the worthy may scribe."
@@ -281,9 +268,9 @@ export default function DarkWriteApp() {
     );
   }
 
-  // Main UI
+  // Main Writing Dashboard
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/40 selection:text-white">
+    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/40 selection:text-white font-ui">
       <SidebarNav 
         stories={stories}
         activeStoryId={activeStoryId}
