@@ -83,6 +83,28 @@
         "storyId": { "type": "string" }
       },
       "required": ["name", "storyId"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "A research note or scratchpad item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content"]
+    },
+    "PlotBeat": {
+      "title": "PlotBeat",
+      "description": "A beat or milestone in the story outline",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "description", "order"]
     }
   },
   "auth": {
@@ -106,6 +128,14 @@
     "/stories/{storyId}/locations/{locationId}": {
       "schema": "Location",
       "description": "Sub-collection of locations"
+    },
+    "/stories/{storyId}/notes/{noteId}": {
+      "schema": "Note",
+      "description": "Story-specific research notes"
+    },
+    "/stories/{storyId}/beats/{beatId}": {
+      "schema": "PlotBeat",
+      "description": "Story-specific plot outline beats"
     }
   }
 }

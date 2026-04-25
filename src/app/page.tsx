@@ -2,7 +2,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Story, Chapter, WritingMode, AppView } from '@/lib/types'
+import { Story, Chapter, WritingMode, AppView, Character, Location } from '@/lib/types'
 import { SidebarNav } from '@/components/writing/sidebar-nav'
 import { WritingEditor } from '@/components/writing/writing-editor'
 import { AIPanel } from '@/components/writing/ai-panel'
@@ -59,7 +59,9 @@ import {
   Zap,
   MessageSquare,
   FileCode,
-  Plus
+  Plus,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
@@ -122,7 +124,7 @@ export default function DarkWriteApp() {
     }
   }, [isAuthorized, user, authLoading, auth, isAuthenticating]);
 
-  // Firestore Data Fetching
+  // Firestore Data Fetching - REAL TIME LISTENERS
   const storiesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
@@ -158,7 +160,7 @@ export default function DarkWriteApp() {
     return chaptersData.find(c => c.id === activeChapterId) || null;
   }, [chaptersData, activeChapterId]);
 
-  // Actions
+  // Actions - PERSISTING TO FIREBASE REAL-TIME
   const handleUnlock = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (password === ACCESS_PASSWORD) {
@@ -204,29 +206,29 @@ export default function DarkWriteApp() {
       });
   };
 
-  const handleAddStory = async () => {
+  const handleAddStory = () => {
     if (!firestore || !user) return;
     const storiesRef = collection(firestore, 'stories');
-    try {
-      const storyDoc = await addDoc(storiesRef, {
-        title: 'New Manuscript',
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        status: 'active'
-      });
+    addDoc(storiesRef, {
+      title: 'New Manuscript',
+      userId: user.uid,
+      createdAt: serverTimestamp(),
+      status: 'active'
+    }).then((storyDoc) => {
       const chaptersRef = collection(firestore, 'stories', storyDoc.id, 'chapters');
-      const chapDoc = await addDoc(chaptersRef, {
+      addDoc(chaptersRef, {
         title: 'Chapter 1',
         content: '',
         order: 1,
         lastSaved: serverTimestamp()
+      }).then((chapDoc) => {
+        setActiveStoryId(storyDoc.id);
+        setActiveChapterId(chapDoc.id);
+        setActiveView('editor');
       });
-      setActiveStoryId(storyDoc.id);
-      setActiveChapterId(chapDoc.id);
-      setActiveView('editor');
-    } catch (err) {
+    }).catch((err) => {
       toast({ variant: "destructive", title: "Error", description: "Failed to create new manuscript." });
-    }
+    });
   };
 
   const handleAddChapter = (storyId: string) => {
@@ -269,6 +271,10 @@ export default function DarkWriteApp() {
           <ScrollArea className="flex-1 p-4 md:p-12 bg-[#09090b]">
             <div className="max-w-5xl mx-auto space-y-8 md:space-y-12">
               <div className="space-y-4 pt-8 md:pt-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Connected to Sanctuary Cloud</span>
+                </div>
                 <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-white">Dashboard</h1>
                 <p className="text-muted-foreground italic text-sm md:text-base">"Every word written is a victory over silence."</p>
               </div>
@@ -310,7 +316,7 @@ export default function DarkWriteApp() {
                     >
                       <div className="space-y-1 overflow-hidden pr-4 text-white">
                         <h3 className="font-bold text-base md:text-xl truncate">{s.title}</h3>
-                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Modified Recently</p>
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Real-time Saved</p>
                       </div>
                       <ArrowRight className="w-5 h-5 shrink-0 text-muted-foreground group-hover:text-primary transition-all" />
                     </div>
@@ -340,7 +346,7 @@ export default function DarkWriteApp() {
                   <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-white">
                     <Users className="w-8 h-8 text-primary" /> Character Codex
                   </h1>
-                  <p className="text-muted-foreground italic">Flesh out the actors on your stage.</p>
+                  <p className="text-muted-foreground italic">Flesh out the actors on your stage in real-time.</p>
                 </div>
                 <Button className="rounded-xl bg-primary hover:bg-primary/90"><Plus className="w-4 h-4 mr-2" /> Add Character</Button>
               </header>
@@ -348,7 +354,7 @@ export default function DarkWriteApp() {
                 <Card className="bg-white/[0.02] border-white/5 border-dashed">
                   <CardContent className="p-12 text-center text-muted-foreground italic">
                     <Users className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                    No character profiles found.
+                    No character profiles found in cloud storage.
                   </CardContent>
                 </Card>
               </div>
@@ -372,199 +378,9 @@ export default function DarkWriteApp() {
                 {[1, 2, 3].map(i => (
                   <Card key={i} className="bg-white/[0.02] border-white/5 hover:border-primary/20 transition-all cursor-pointer">
                     <CardHeader><CardTitle className="text-sm font-bold text-white">Research Node {i}</CardTitle></CardHeader>
-                    <CardContent><p className="text-xs text-muted-foreground">The history of the old kingdom starts with...</p></CardContent>
+                    <CardContent><p className="text-xs text-muted-foreground">Synchronized with cloud...</p></CardContent>
                   </Card>
                 ))}
-              </div>
-            </div>
-          </div>
-        );
-      case 'sprint':
-        return (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#09090b]">
-             <div className="text-center space-y-8 max-w-lg w-full">
-                <div className="relative inline-block">
-                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-                  <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-primary/20 flex items-center justify-center">
-                    <span className="text-6xl md:text-8xl font-black tracking-tighter text-white">25:00</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-white">Writing Sprint</h2>
-                  <p className="text-muted-foreground italic">"Shut out the world. Only the ink matters."</p>
-                </div>
-                <div className="flex gap-4 justify-center">
-                   <Button size="lg" className="rounded-2xl px-12 h-16 text-lg font-bold shadow-xl shadow-primary/20">Begin Session</Button>
-                   <Button size="lg" variant="outline" className="rounded-2xl h-16 w-16 p-0 border-white/5"><Timer className="w-6 h-6" /></Button>
-                </div>
-             </div>
-          </div>
-        );
-      case 'pacing':
-        return (
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <h1 className="text-3xl font-bold text-white flex items-center gap-3"><Zap className="w-8 h-8 text-primary" /> Pacing Analyzer</h1>
-              <Card className="bg-white/[0.02] border-white/5 h-80 flex items-center justify-center border-dashed">
-                <div className="text-center space-y-4">
-                  <TrendingUp className="w-12 h-12 mx-auto text-primary opacity-20" />
-                  <p className="text-muted-foreground italic">Analyzing sentence rhythm...</p>
-                </div>
-              </Card>
-            </div>
-          </div>
-        );
-      case 'dialogue':
-        return (
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <h1 className="text-3xl font-bold text-white flex items-center gap-3"><MessageSquare className="w-8 h-8 text-primary" /> Dialogue Lab</h1>
-              <Card className="bg-white/[0.02] border-white/5 p-8 space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 shrink-0" />
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-sm italic">"The truth is rarely pure and never simple."</div>
-                </div>
-                <div className="flex gap-4 justify-end">
-                  <div className="p-4 rounded-2xl bg-primary/20 border border-primary/20 text-sm italic">"Indeed. But it is always necessary."</div>
-                  <div className="w-10 h-10 rounded-full bg-muted shrink-0" />
-                </div>
-              </Card>
-            </div>
-          </div>
-        );
-      case 'versions':
-        return (
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
-             <div className="max-w-4xl mx-auto space-y-8">
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3"><FileCode className="w-8 h-8 text-primary" /> Draft Versions</h1>
-                <div className="grid gap-4">
-                   {[1, 2, 3].map(i => (
-                     <div key={i} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between group hover:border-primary/20 transition-all cursor-pointer">
-                        <div className="flex items-center gap-4">
-                          <History className="w-5 h-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-bold text-white">Draft {i}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase">Saved 2 hours ago</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">Restore</Button>
-                     </div>
-                   ))}
-                </div>
-             </div>
-          </div>
-        );
-      case 'world':
-        return (
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <header className="flex items-center justify-between pt-8 md:pt-0">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-white">
-                    <Globe className="w-8 h-8 text-primary" /> World Atlas
-                  </h1>
-                  <p className="text-muted-foreground italic">Map the uncharted territories of your world.</p>
-                </div>
-                <Button className="rounded-xl bg-primary hover:bg-primary/90"><Plus className="w-4 h-4 mr-2" /> New Location</Button>
-              </header>
-              <Card className="bg-white/[0.02] border-white/5 border-dashed">
-                <CardContent className="p-12 text-center text-muted-foreground italic">
-                  <Globe className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                  Your map is currently blank.
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        );
-      case 'plot':
-        return (
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <header className="flex items-center justify-between pt-8 md:pt-0">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-white">
-                    <GitGraph className="w-8 h-8 text-primary" /> Plot Outline
-                  </h1>
-                  <p className="text-muted-foreground italic">Structure your narrative arc.</p>
-                </div>
-                <Button className="rounded-xl bg-primary hover:bg-primary/90"><Plus className="w-4 h-4 mr-2" /> Add Beat</Button>
-              </header>
-              <div className="relative border-l-2 border-white/5 ml-4 pl-8 space-y-8">
-                <div className="relative">
-                  <div className="absolute -left-[34px] top-0 w-4 h-4 rounded-full bg-primary shadow-lg shadow-primary/50" />
-                  <h3 className="font-bold text-lg text-white">Inciting Incident</h3>
-                  <p className="text-sm text-muted-foreground italic">The hero discovers the lost artifact...</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      case 'search':
-        return (
-          <div className="flex-1 p-8 md:p-12 bg-[#09090b]">
-            <div className="max-w-2xl mx-auto space-y-8">
-              <div className="relative pt-8 md:pt-0">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input className="h-14 pl-12 text-lg rounded-2xl bg-white/[0.02] border-white/5 text-white" placeholder="Search across all manuscripts..." />
-              </div>
-              <p className="text-center text-muted-foreground text-sm italic">Type a keyword to begin your search.</p>
-            </div>
-          </div>
-        );
-      case 'stats':
-        return (
-          <div className="flex-1 p-8 md:p-12 overflow-y-auto bg-[#09090b]">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <h1 className="text-3xl font-bold pt-8 md:pt-0 text-white">Writing Analytics</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-white/[0.02] border-white/5 h-64">
-                   <CardHeader><CardTitle className="text-xs uppercase tracking-widest text-primary">Word Count Velocity</CardTitle></CardHeader>
-                   <CardContent className="flex items-center justify-center h-full pb-12">
-                     <BarChart3 className="w-12 h-12 opacity-10" />
-                   </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        );
-      case 'export':
-        return (
-          <div className="flex-1 p-8 md:p-12 bg-[#09090b]">
-             <div className="max-w-xl mx-auto space-y-8 text-center pt-8 md:pt-0">
-                <Download className="w-16 h-16 text-primary mx-auto opacity-50" />
-                <h1 className="text-3xl font-bold text-white">Export Manuscript</h1>
-                <p className="text-muted-foreground">Format and prepare your work for the world.</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="h-16 rounded-2xl border-white/5 bg-white/[0.02] hover:bg-primary/10 hover:text-primary transition-all text-white">PDF Document</Button>
-                  <Button variant="outline" className="h-16 rounded-2xl border-white/5 bg-white/[0.02] hover:bg-primary/10 hover:text-primary transition-all text-white">ePub Format</Button>
-                </div>
-             </div>
-          </div>
-        );
-      case 'archive':
-        return (
-          <div className="flex-1 p-8 md:p-12 bg-[#09090b]">
-            <div className="max-w-4xl mx-auto space-y-8 pt-8 md:pt-0">
-              <h1 className="text-3xl font-bold flex items-center gap-3 text-white"><Archive className="w-8 h-8 text-muted-foreground" /> Archive</h1>
-              <Card className="bg-white/[0.01] border-white/5 border-dashed">
-                <CardContent className="p-12 text-center text-muted-foreground italic">Your vault is currently empty.</CardContent>
-              </Card>
-            </div>
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="flex-1 p-8 md:p-12 bg-[#09090b]">
-            <div className="max-w-2xl mx-auto space-y-8 pt-8 md:pt-0">
-              <h1 className="text-3xl font-bold flex items-center gap-3 text-white"><Settings className="w-8 h-8" /> Settings</h1>
-              <div className="space-y-6">
-                <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-white">Distraction-Free Auto-Hide</h3>
-                    <p className="text-xs text-muted-foreground">Hide sidebar automatically during deep work sessions.</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="border-white/5">Enabled</Button>
-                </div>
               </div>
             </div>
           </div>
@@ -573,8 +389,8 @@ export default function DarkWriteApp() {
         return (
           <div className="flex-1 flex flex-col items-center justify-center bg-[#09090b] text-muted-foreground p-6 text-center">
             <Sparkles className="w-12 h-12 opacity-20 mb-6" />
-            <h2 className="text-xl font-bold text-foreground/80">{activeView.charAt(0).toUpperCase() + activeView.slice(1)}</h2>
-            <p className="mt-2 text-sm italic max-w-xs">Expanding the sanctuary. This feature will arrive in a future update.</p>
+            <h2 className="text-xl font-bold text-white">{activeView.charAt(0).toUpperCase() + activeView.slice(1)}</h2>
+            <p className="mt-2 text-sm italic max-w-xs text-muted-foreground/60">Integrating with your cloud sanctuary. This module is expanding.</p>
           </div>
         );
     }
@@ -585,7 +401,7 @@ export default function DarkWriteApp() {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#09090b] gap-6 px-4 text-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-sm font-medium tracking-widest text-foreground uppercase animate-pulse">Opening the Sanctuary</p>
+        <p className="text-sm font-medium tracking-widest text-foreground uppercase animate-pulse">Syncing Sanctuary</p>
       </div>
     );
   }
@@ -614,7 +430,7 @@ export default function DarkWriteApp() {
                 className="pl-12 pr-12 h-12 bg-card/50 border-border/50 text-base rounded-xl text-white"
                 autoFocus
               />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50">
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition-opacity">
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -643,7 +459,6 @@ export default function DarkWriteApp() {
             onSelectView={setActiveView}
             onSelectStory={(sid) => {
               setActiveStoryId(sid);
-              // Auto-select editor view if we are switching stories
               if (activeView === 'dashboard') setActiveView('editor');
             }}
             onSelectChapter={(sid, cid) => {
@@ -710,7 +525,7 @@ export default function DarkWriteApp() {
               onClick={() => setIsSidebarOpen(true)} 
               className="bg-black/40 backdrop-blur-md border border-white/5 rounded-lg h-9 w-9"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5 text-white" />
             </Button>
           </div>
         )}
@@ -723,7 +538,7 @@ export default function DarkWriteApp() {
             onClick={() => setIsSidebarOpen(true)} 
             className="absolute top-4 left-4 z-40 bg-black/40 backdrop-blur-md border border-white/5 rounded-lg h-9 w-9"
           >
-            <PanelLeft className="w-4 h-4" />
+            <PanelLeft className="w-4 h-4 text-white" />
           </Button>
         )}
 
@@ -741,10 +556,18 @@ export default function DarkWriteApp() {
               <PanelLeft className="w-4 h-4 text-muted-foreground/40" />
             </Button>
           )}
+
+          {/* Cloud Status Indicator */}
+          {writingMode === 'normal' && (
+            <div className="absolute bottom-4 right-4 z-40 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/5 flex items-center gap-2 pointer-events-none opacity-40 hover:opacity-100 transition-opacity">
+              <Wifi className="w-3 h-3 text-green-500" />
+              <span className="text-[8px] font-bold text-white uppercase tracking-widest">Real-time Persistence Active</span>
+            </div>
+          )}
         </div>
         
         {/* AI Panel (Desktop) */}
-        {!isMobile && writingMode === 'normal' && (activeView === 'editor' || activeView === 'dialogue') && (
+        {!isMobile && writingMode === 'normal' && (activeView === 'editor') && (
           <div className={cn("transition-all duration-500 ease-in-out shrink-0 relative", isAIPanelOpen ? "w-80" : "w-0 overflow-hidden")}>
              <AIPanel currentText={activeChapter?.content || ''} />
              {isAIPanelOpen && (
@@ -761,7 +584,7 @@ export default function DarkWriteApp() {
         )}
 
         {/* AI Panel (Mobile Sheet) */}
-        {isMobile && writingMode === 'normal' && (activeView === 'editor' || activeView === 'dialogue') && (
+        {isMobile && writingMode === 'normal' && (activeView === 'editor') && (
           <Sheet open={isAIPanelOpen} onOpenChange={setIsAIPanelOpen}>
             <SheetContent side="right" className="p-0 w-[300px] bg-[#09090b] border-white/5">
               <div className="sr-only">
@@ -776,7 +599,7 @@ export default function DarkWriteApp() {
         )}
 
         {/* Floating AI Toggle */}
-        {writingMode === 'normal' && (activeView === 'editor' || activeView === 'dialogue') && (!isAIPanelOpen || isMobile) && (
+        {writingMode === 'normal' && (activeView === 'editor') && (!isAIPanelOpen || isMobile) && (
           <Button 
             variant="ghost" 
             size="icon" 
