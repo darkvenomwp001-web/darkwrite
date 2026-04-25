@@ -29,7 +29,7 @@ import {
 import { signInAnonymously, signOut } from 'firebase/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { KeyRound, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { KeyRound, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
 
@@ -47,6 +47,7 @@ export default function DarkWriteApp() {
   
   // Authorization state
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -113,29 +114,17 @@ export default function DarkWriteApp() {
     if (e) e.preventDefault();
     
     if (password === ACCESS_PASSWORD) {
-      setIsAuthenticating(true);
-      try {
-        await signInAnonymously(auth);
-        setIsAuthorized(true);
-        localStorage.setItem('dw_authorized', 'true');
-        toast({
-          title: "Sanctuary Unlocked",
-          description: "Welcome back, scribe.",
-        });
-      } catch (err) {
-        toast({
-          variant: "destructive",
-          title: "Access Error",
-          description: "Could not open the sanctuary. Please try again.",
-        });
-      } finally {
-        setIsAuthenticating(false);
-      }
+      toast({
+        title: "Access Granted",
+        description: "Welcome back, scribe. Unlocking the sanctuary...",
+      });
+      setIsAuthorized(true);
+      localStorage.setItem('dw_authorized', 'true');
     } else {
       toast({
         variant: "destructive",
-        title: "Invalid Key",
-        description: "The path remains closed.",
+        title: "Invalid Access Key",
+        description: "The path remains closed. Please verify the unique key.",
       });
     }
   };
@@ -213,6 +202,7 @@ export default function DarkWriteApp() {
     signOut(auth);
     setIsAuthorized(false);
     localStorage.removeItem('dw_authorized');
+    setPassword('');
   };
 
   // Loading Screen: Show when we are verifying password or signing in
@@ -225,8 +215,8 @@ export default function DarkWriteApp() {
     );
   }
 
-  // Password Gate: Show only if not signed in
-  if (!user) {
+  // Password Gate: Show only if not authorized or not signed in
+  if (!user || !isAuthorized) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4 font-ui">
         <div className="max-w-md w-full space-y-8 text-center animate-in fade-in duration-700">
@@ -243,13 +233,20 @@ export default function DarkWriteApp() {
             <div className="relative group">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Access Key"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-12 bg-card border-border/50 focus:border-primary transition-all rounded-xl"
+                className="pl-12 pr-12 h-12 bg-card border-border/50 focus:border-primary transition-all rounded-xl"
                 autoFocus
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
             <Button 
               size="lg" 
