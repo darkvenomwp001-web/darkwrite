@@ -41,8 +41,6 @@ interface AppShellProps {
   children: React.ReactNode;
 }
 
-const ACCESS_PASSWORD = 'darkwrite2025';
-
 export function AppShell({ children }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,10 +67,12 @@ export function AppShell({ children }: AppShellProps) {
   // Authorization Check
   useEffect(() => {
     const saved = localStorage.getItem('dw_authorized');
+    const publicRoutes = ['/', '/darkwritelogin'];
+    
     if (saved === 'true') {
       setIsAuthorized(true);
-    } else if (pathname !== '/') {
-      router.push('/');
+    } else if (!publicRoutes.includes(pathname)) {
+      router.push('/darkwritelogin');
     }
   }, [pathname, router]);
 
@@ -84,7 +84,7 @@ export function AppShell({ children }: AppShellProps) {
         .catch(() => {
           setIsAuthorized(false);
           localStorage.removeItem('dw_authorized');
-          router.push('/');
+          router.push('/darkwritelogin');
         })
         .finally(() => setIsAuthenticating(false));
     }
@@ -191,11 +191,12 @@ export function AppShell({ children }: AppShellProps) {
     );
   }
 
-  if (!isAuthorized && pathname !== '/') return null;
+  const publicRoutes = ['/', '/darkwritelogin'];
+  if (!isAuthorized && !publicRoutes.includes(pathname)) return null;
 
   return (
     <div className="flex h-screen w-screen bg-[#09090b] overflow-hidden selection:bg-primary/30">
-      {!isMobile && (
+      {!isMobile && isAuthorized && (
         <div className={cn("transition-all duration-500 ease-in-out shrink-0", isSidebarOpen ? "w-[22rem]" : "w-0 overflow-hidden")}>
           <SidebarNav 
             stories={stories}
@@ -216,7 +217,7 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       )}
 
-      {isMobile && (
+      {isMobile && isAuthorized && (
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <SheetContent side="left" className="p-0 w-[300px] bg-[#09090b] border-white/5">
             <div className="sr-only">
@@ -249,7 +250,7 @@ export function AppShell({ children }: AppShellProps) {
       )}
 
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-w-0">
-        {isMobile && (
+        {isMobile && isAuthorized && (
           <div className="absolute top-4 left-4 z-40">
             <Button 
               variant="ghost" 
@@ -262,7 +263,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         )}
 
-        {!isMobile && (
+        {!isMobile && isAuthorized && (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -275,10 +276,12 @@ export function AppShell({ children }: AppShellProps) {
 
         <div className="flex-1 flex flex-col relative overflow-hidden min-w-0">
           {children}
-          <div className="absolute bottom-6 right-8 z-40 px-4 py-2 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/5 flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity pointer-events-none">
-            <Wifi className="w-3.5 h-3.5 text-green-500" />
-            <span className="text-[9px] font-bold text-white uppercase tracking-[0.2em]">Real-time Sanctuary Active</span>
-          </div>
+          {isAuthorized && (
+            <div className="absolute bottom-6 right-8 z-40 px-4 py-2 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/5 flex items-center gap-3 opacity-40 hover:opacity-100 transition-opacity pointer-events-none">
+              <Wifi className="w-3.5 h-3.5 text-green-500" />
+              <span className="text-[9px] font-bold text-white uppercase tracking-[0.2em]">Real-time Sanctuary Active</span>
+            </div>
+          )}
         </div>
       </main>
       <Toaster />

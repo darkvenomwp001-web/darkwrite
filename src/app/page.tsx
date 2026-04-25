@@ -1,21 +1,14 @@
 
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { KeyRound, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { BookOpen, ArrowRight, ShieldCheck, Zap, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 
-const ACCESS_PASSWORD = 'darkwrite2025';
-
-export default function LandingPage() {
+export default function RootLandingPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('dw_authorized');
@@ -24,55 +17,76 @@ export default function LandingPage() {
     }
   }, [router]);
 
-  const handleUnlock = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (password === ACCESS_PASSWORD) {
-      localStorage.setItem('dw_authorized', 'true');
-      toast({ title: "Sanctuary Unlocked", description: "Welcome back, scribe." });
-      router.push('/dashboard');
-    } else {
-      toast({ variant: "destructive", title: "Access Denied", description: "The key is incorrect." });
-    }
-  };
-
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-[#09090b] relative overflow-hidden p-4">
-      <div className="max-w-md w-full p-8 md:p-12 space-y-12 relative z-10 bg-white/[0.01] border border-white/5 rounded-[2.5rem] backdrop-blur-xl">
-        <div className="text-center space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/40 group">
-            <Lock className="w-10 h-10 text-white group-hover:scale-110 transition-transform" />
+    <div className="min-h-screen w-full bg-[#09090b] text-white flex flex-col font-ui selection:bg-primary/30">
+      {/* Background Glow */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full" />
+      </div>
+
+      <header className="container mx-auto px-6 py-8 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <BookOpen className="w-5 h-5 text-white" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tighter text-white">DarkWrite</h1>
-            <p className="text-muted-foreground text-xs md:text-sm uppercase tracking-[0.2em] font-medium opacity-60">The Scribe's Sanctuary</p>
+          <span className="text-xl font-bold tracking-tighter">DarkWrite</span>
+        </div>
+        <Link href="/darkwritelogin">
+          <Button variant="ghost" className="text-sm font-bold uppercase tracking-widest text-muted-foreground hover:text-primary">
+            Access Sanctuary
+          </Button>
+        </Link>
+      </header>
+
+      <main className="flex-1 flex flex-col items-center justify-center container mx-auto px-6 relative z-10 text-center">
+        <div className="space-y-8 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold uppercase tracking-[0.2em] text-primary animate-fade-in">
+            <Sparkles className="w-3 h-3" /> The Scribe's Sanctuary
+          </div>
+          <h1 className="text-5xl md:text-8xl font-bold tracking-tighter leading-[0.9] animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            Where your <span className="text-primary italic">shadows</span> find their words.
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            A minimalist, high-fidelity writing environment designed for novelists, storytellers, and dreamers who thrive in the dark.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Link href="/darkwritelogin">
+              <Button size="lg" className="h-14 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-3 shadow-2xl shadow-primary/20 text-lg">
+                Enter the Sanctuary <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
 
-        <form onSubmit={handleUnlock} className="space-y-6">
-          <div className="relative group">
-            <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter Sanctuary Key"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-12 pr-12 h-14 bg-white/[0.03] border-white/10 text-base rounded-2xl text-white focus:border-primary focus:ring-primary"
-              autoFocus
-            />
-            <button 
-              type="button" 
-              onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-4 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 max-w-5xl w-full animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold">Secure Vault</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">Your manuscripts are encrypted and stored in a private cloud sanctuary.</p>
           </div>
-          <Button size="lg" type="submit" className="w-full h-14 text-base font-bold rounded-2xl shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 text-white transition-all transform hover:scale-[1.02]">
-            Access Sanctuary <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </form>
-        <p className="text-center text-[9px] uppercase tracking-[0.3em] text-muted-foreground italic opacity-40">"Only the worthy may scribe."</p>
-      </div>
+          <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center">
+              <Zap className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold">Real-time Sync</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">Every keystroke is synchronized instantly across all your scribe devices.</p>
+          </div>
+          <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold">AI Companion</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">A specialized AI trained to refine your prose without losing your voice.</p>
+          </div>
+        </div>
+      </main>
+
+      <footer className="container mx-auto px-6 py-12 text-center text-[10px] uppercase tracking-[0.3em] text-muted-foreground opacity-40">
+        &copy; 2025 DarkWrite. Scribe responsibly.
+      </footer>
     </div>
-  );
+  )
 }
