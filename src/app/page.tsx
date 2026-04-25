@@ -13,7 +13,7 @@ import {
   useUser, 
   useFirestore, 
   useCollection, 
-  useDoc 
+  useMemoFirebase 
 } from '@/firebase'
 import { 
   collection, 
@@ -24,14 +24,16 @@ import {
   updateDoc, 
   deleteDoc, 
   serverTimestamp, 
-  orderBy,
-  Firestore
+  orderBy
 } from 'firebase/firestore'
-import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth'
+import { signInAnonymously, signOut } from 'firebase/auth'
 import { Button } from '@/components/ui/button'
-import { LogIn, Sparkles } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Sparkles, KeyRound, Lock, ArrowRight } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
+
+const ACCESS_PASSWORD = 'darkwrite2025';
 
 export default function DarkWriteApp() {
   const { toast } = useToast();
@@ -42,9 +44,22 @@ export default function DarkWriteApp() {
   const [activeStoryId, setActiveStoryId] = useState<string | undefined>();
   const [activeChapterId, setActiveChapterId] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
+  
+  // Gatekeeper state
+  const [password, setPassword] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  // Check if we've already been authorized in this session
+  useEffect(() => {
+    const saved = localStorage.getItem('dw_authorized');
+    if (saved === 'true') {
+      setIsAuthorized(true);
+    }
+  }, []);
 
   // Fetch Stories
-  const storiesQuery = useMemo(() => {
+  const storiesQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(
       collection(firestore, 'stories'),
@@ -53,10 +68,10 @@ export default function DarkWriteApp() {
     );
   }, [firestore, user]);
 
-  const { data: storiesData, loading: storiesLoading } = useCollection<Story>(storiesQuery);
+  const { data: storiesData } = useCollection<Story>(storiesQuery);
 
   // Fetch Chapters for active story
-  const chaptersQuery = useMemo(() => {
+  const chaptersQuery = useMemoFirebase(() => {
     if (!firestore || !activeStoryId) return null;
     return query(
       collection(firestore, 'stories', activeStoryId, 'chapters'),
@@ -80,12 +95,33 @@ export default function DarkWriteApp() {
     return chaptersData.find(c => c.id === activeChapterId) || null;
   }, [chaptersData, activeChapterId]);
 
-  const handleLogin = async () => {
-    if (!auth) return;
-    try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (error) {
-      console.error("Login failed", error);
+  const handleUnlock = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (password === ACCESS_PASSWORD) {
+      setIsAuthenticating(true);
+      try {
+        await signInAnonymously(auth);
+        setIsAuthorized(true);
+        localStorage.setItem('dw_authorized', 'true');
+        toast({
+          title: "Sanctuary Unlocked",
+          description: "Welcome back, scribe.",
+        });
+      } catch (err) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Could not establish a secure session.",
+        });
+      } finally {
+        setIsAuthenticating(false);
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Invalid Access Key",
+        description: "The path remains closed.",
+      });
     }
   };
 
@@ -134,13 +170,12 @@ export default function DarkWriteApp() {
 
     const storiesRef = collection(firestore, 'stories');
     const newStoryData = {
-      title: 'Untitled Story',
+      title: 'New Story',
       userId: user.uid,
       createdAt: serverTimestamp()
     };
 
     addDoc(storiesRef, newStoryData).then((storyDoc) => {
-      // Create initial chapter
       const chaptersRef = collection(firestore, 'stories', storyDoc.id, 'chapters');
       addDoc(chaptersRef, {
         title: 'Chapter 1',
@@ -150,72 +185,36 @@ export default function DarkWriteApp() {
       }).then((chapDoc) => {
         setActiveStoryId(storyDoc.id);
         setActiveChapterId(chapDoc.id);
-        toast({
-          title: "Story Created",
-          description: "A new blank canvas awaits your words.",
-        });
       });
-    }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        path: storiesRef.path,
-        operation: 'create',
-        requestResourceData: newStoryData
-      });
-      errorEmitter.emit('permission-error', permissionError);
     });
   };
 
   const handleAddChapter = (storyId: string) => {
     if (!firestore) return;
-
     const chaptersRef = collection(firestore, 'stories', storyId, 'chapters');
     const order = (chaptersData?.length || 0) + 1;
-    const newChapterData = {
+    addDoc(chaptersRef, {
       title: `Chapter ${order}`,
       content: '',
       order,
       lastSaved: serverTimestamp()
-    };
-
-    addDoc(chaptersRef, newChapterData).then((docRef) => {
-      setActiveStoryId(storyId);
+    }).then((docRef) => {
       setActiveChapterId(docRef.id);
-      toast({
-        title: "Chapter Added",
-        description: "New chapter appended to your story.",
-      });
-    }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        path: chaptersRef.path,
-        operation: 'create',
-        requestResourceData: newChapterData
-      });
-      errorEmitter.emit('permission-error', permissionError);
     });
   };
 
   const handleDeleteStory = (storyId: string) => {
     if (!firestore) return;
-    const storyRef = doc(firestore, 'stories', storyId);
-    deleteDoc(storyRef).then(() => {
-      if (activeStoryId === storyId) {
-        setActiveStoryId(undefined);
-        setActiveChapterId(undefined);
-      }
-      toast({
-        title: "Story Deleted",
-        description: "Your story has been removed.",
-      });
-    }).catch(async (err) => {
-      const permissionError = new FirestorePermissionError({
-        path: storyRef.path,
-        operation: 'delete'
-      });
-      errorEmitter.emit('permission-error', permissionError);
-    });
+    deleteDoc(doc(firestore, 'stories', storyId));
   };
 
-  if (authLoading) {
+  const handleLogout = () => {
+    signOut(auth);
+    setIsAuthorized(false);
+    localStorage.removeItem('dw_authorized');
+  };
+
+  if (authLoading || isAuthenticating) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <Sparkles className="w-8 h-8 text-primary animate-pulse" />
@@ -223,21 +222,39 @@ export default function DarkWriteApp() {
     );
   }
 
-  if (!user) {
+  // Password Gate
+  if (!isAuthorized || !user) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4 text-center">
-        <div className="max-w-md space-y-6">
-          <div className="w-20 h-20 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/20">
-            <Sparkles className="w-10 h-10 text-white" />
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/20 animate-in fade-in zoom-in duration-500">
+            <Lock className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">DarkWrite</h1>
-          <p className="text-muted-foreground text-lg">
-            A focused, AI-powered writing sanctuary for modern authors. Sign in to start your masterpiece.
-          </p>
-          <Button onClick={handleLogin} size="lg" className="w-full gap-2 text-lg h-12">
-            <LogIn className="w-5 h-5" />
-            Sign in with Google
-          </Button>
+          
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight">DarkWrite Sanctuary</h1>
+            <p className="text-muted-foreground">Access is restricted to authorized scribes.</p>
+          </div>
+
+          <form onSubmit={handleUnlock} className="space-y-4 pt-4 animate-in slide-in-from-bottom-4 duration-700">
+            <div className="relative group">
+              <KeyRound className="absolute left-3 top-3 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input
+                type="password"
+                placeholder="Enter Sanctuary Key"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 h-12 bg-card border-border/50 focus:border-primary transition-all text-lg"
+              />
+            </div>
+            <Button size="lg" className="w-full h-12 gap-2 text-lg shadow-lg shadow-primary/10">
+              Unlock Sanctuary
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+            <p className="text-xs text-muted-foreground/50 pt-4">
+              "Words are sacred. Only the worthy may scribe."
+            </p>
+          </form>
         </div>
       </div>
     );
@@ -257,7 +274,7 @@ export default function DarkWriteApp() {
         onAddChapter={handleAddChapter}
         onDeleteStory={handleDeleteStory}
         user={user}
-        onLogout={() => auth && signOut(auth)}
+        onLogout={handleLogout}
       />
       
       <main className="flex-1 flex flex-row overflow-hidden">
