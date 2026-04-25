@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from 'react'
@@ -97,7 +96,6 @@ export function SidebarNav({
     { id: 'plot', icon: GitGraph, label: 'Plot Outline' },
     { id: 'notes', icon: StickyNote, label: 'Note Vault' },
     { id: 'stats', icon: BarChart3, label: 'Statistics' },
-    { id: 'export', icon: Download, label: 'Export' },
   ] as const;
 
   const handleRenameSubmit = () => {
@@ -230,7 +228,7 @@ export function SidebarNav({
 
                     {activeStoryId === story.id && (
                       <div className="ml-5 mt-1 flex flex-col space-y-1 animate-in slide-in-from-top-1">
-                        <div className="flex gap-1 mb-4 overflow-x-auto py-1 custom-scrollbar">
+                        <div className="flex gap-1 mb-4 overflow-x-auto py-1 custom-scrollbar pr-4">
                           {projectModules.map((pItem) => (
                              <button
                                key={pItem.id}

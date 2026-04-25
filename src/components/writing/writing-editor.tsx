@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useRef } from 'react'
@@ -49,15 +48,15 @@ export function WritingEditor({
             <BookOpen className="w-10 h-10 text-primary/40" />
           </div>
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight text-white/80">Select a Chapter to Write</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-white/80">Begin Your Story</h2>
             <p className="text-base text-muted-foreground/60 leading-relaxed max-w-xs mx-auto italic">
-              "Every story starts with a single word. Pick your chapter from the library on the left and let it flow."
+              "The first sentence is the hardest. After that, the words find their own way."
             </p>
           </div>
           <div className="flex flex-col items-center gap-4">
              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
                <Plus className="w-4 h-4 text-primary" />
-               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Use the Sidebar to add chapters</span>
+               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Select a chapter in the library to start scribing</span>
              </div>
           </div>
         </div>
