@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -6,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { KeyRound, Lock, ArrowRight, Eye, EyeOff, BookOpen } from 'lucide-react'
+import { KeyRound, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 
-const ACCESS_PASSWORD = 'darkwrite2025';
+const ACCESS_PASSWORD = '08172004';
 
 export default function DarkWriteLoginPage() {
   const router = useRouter();
