@@ -29,7 +29,7 @@ import {
 import { signInAnonymously, signOut } from 'firebase/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sparkles, KeyRound, Lock, ArrowRight } from 'lucide-react'
+import { Sparkles, KeyRound, Lock, ArrowRight, Loader2 } from 'lucide-react'
 import { errorEmitter } from '@/firebase/error-emitter'
 import { FirestorePermissionError } from '@/firebase/errors'
 
@@ -50,13 +50,21 @@ export default function DarkWriteApp() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // Check if we've already been authorized in this session
+  // Initial check for authorization
   useEffect(() => {
     const saved = localStorage.getItem('dw_authorized');
     if (saved === 'true') {
       setIsAuthorized(true);
     }
   }, []);
+
+  // Automatic anonymous sign-in if authorized but not logged in
+  useEffect(() => {
+    if (isAuthorized && !user && !authLoading && !isAuthenticating) {
+      setIsAuthenticating(true);
+      signInAnonymously(auth).finally(() => setIsAuthenticating(false));
+    }
+  }, [isAuthorized, user, authLoading, auth, isAuthenticating]);
 
   // Fetch Stories
   const storiesQuery = useMemoFirebase(() => {
@@ -214,10 +222,12 @@ export default function DarkWriteApp() {
     localStorage.removeItem('dw_authorized');
   };
 
-  if (authLoading || isAuthenticating) {
+  // Global loading state while checking initial auth or password-triggered login
+  if (authLoading || (isAuthorized && !user && isAuthenticating)) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-muted-foreground animate-pulse">Opening the Sanctuary...</p>
       </div>
     );
   }
@@ -227,31 +237,35 @@ export default function DarkWriteApp() {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4">
         <div className="max-w-md w-full space-y-8 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/20 animate-in fade-in zoom-in duration-500">
-            <Lock className="w-10 h-10 text-white" />
+          <div className="w-24 h-24 rounded-3xl bg-primary mx-auto flex items-center justify-center shadow-2xl shadow-primary/30 animate-in fade-in zoom-in duration-700">
+            <Lock className="w-12 h-12 text-white" />
           </div>
           
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">DarkWrite Sanctuary</h1>
-            <p className="text-muted-foreground">Access is restricted to authorized scribes.</p>
+          <div className="space-y-3">
+            <h1 className="text-5xl font-bold tracking-tighter">DarkWrite</h1>
+            <p className="text-muted-foreground text-lg">A private sanctuary for the dedicated scribe.</p>
           </div>
 
-          <form onSubmit={handleUnlock} className="space-y-4 pt-4 animate-in slide-in-from-bottom-4 duration-700">
+          <form onSubmit={handleUnlock} className="space-y-4 pt-6 animate-in slide-in-from-bottom-8 duration-1000">
             <div className="relative group">
-              <KeyRound className="absolute left-3 top-3 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input
                 type="password"
-                placeholder="Enter Sanctuary Key"
+                placeholder="Sanctuary Key"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 h-12 bg-card border-border/50 focus:border-primary transition-all text-lg"
+                className="pl-12 h-14 bg-card border-border/50 focus:border-primary transition-all text-xl rounded-xl shadow-inner"
+                autoFocus
               />
             </div>
-            <Button size="lg" className="w-full h-12 gap-2 text-lg shadow-lg shadow-primary/10">
-              Unlock Sanctuary
-              <ArrowRight className="w-5 h-5" />
+            <Button 
+              size="lg" 
+              disabled={isAuthenticating}
+              className="w-full h-14 gap-2 text-xl font-semibold shadow-xl shadow-primary/20 rounded-xl transition-all active:scale-95"
+            >
+              {isAuthenticating ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Unlock Sanctuary <ArrowRight className="w-6 h-6" /></>}
             </Button>
-            <p className="text-xs text-muted-foreground/50 pt-4">
+            <p className="text-sm text-muted-foreground/60 italic pt-6">
               "Words are sacred. Only the worthy may scribe."
             </p>
           </form>
@@ -260,8 +274,9 @@ export default function DarkWriteApp() {
     );
   }
 
+  // Main UI
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/30">
+    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/40 selection:text-white">
       <SidebarNav 
         stories={stories}
         activeStoryId={activeStoryId}
@@ -277,7 +292,7 @@ export default function DarkWriteApp() {
         onLogout={handleLogout}
       />
       
-      <main className="flex-1 flex flex-row overflow-hidden">
+      <main className="flex-1 flex flex-row overflow-hidden relative">
         <WritingEditor 
           activeChapter={activeChapter}
           onUpdateContent={handleUpdateContent}
