@@ -62,7 +62,13 @@ export default function DarkWriteApp() {
   useEffect(() => {
     if (isAuthorized && !user && !authLoading && !isAuthenticating) {
       setIsAuthenticating(true);
-      signInAnonymously(auth).finally(() => setIsAuthenticating(false));
+      signInAnonymously(auth)
+        .catch((err) => {
+          console.error("Auto sign-in failed", err);
+          setIsAuthorized(false);
+          localStorage.removeItem('dw_authorized');
+        })
+        .finally(() => setIsAuthenticating(false));
     }
   }, [isAuthorized, user, authLoading, auth, isAuthenticating]);
 
@@ -121,7 +127,6 @@ export default function DarkWriteApp() {
           title: "Authentication Error",
           description: "Could not establish a secure session.",
         });
-      } finally {
         setIsAuthenticating(false);
       }
     } else {
@@ -223,7 +228,8 @@ export default function DarkWriteApp() {
   };
 
   // Global loading state while checking initial auth or password-triggered login
-  if (authLoading || (isAuthorized && !user && isAuthenticating)) {
+  // We show the loader if Firebase is loading OR if we are authorized but waiting for the session to initialize
+  if (authLoading || (isAuthorized && !user)) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background gap-4">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -232,8 +238,8 @@ export default function DarkWriteApp() {
     );
   }
 
-  // Password Gate
-  if (!isAuthorized || !user) {
+  // Password Gate - Shown only if we don't have a user session AND we aren't already authorized
+  if (!user) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-4">
         <div className="max-w-md w-full space-y-8 text-center">
@@ -260,6 +266,7 @@ export default function DarkWriteApp() {
             </div>
             <Button 
               size="lg" 
+              type="submit"
               disabled={isAuthenticating}
               className="w-full h-14 gap-2 text-xl font-semibold shadow-xl shadow-primary/20 rounded-xl transition-all active:scale-95"
             >
